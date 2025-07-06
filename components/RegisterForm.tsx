@@ -80,7 +80,7 @@ export function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormProps) {
               ¡Únete a Unsent! 💫
             </h2>
             <p className="text-sm sm:text-base text-gray-600">
-              Crea tu cuenta para registrar hasta 5 mascotas
+              Create your account to begin your emotional journey
             </p>
           </div>
 
@@ -165,7 +165,7 @@ export function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormProps) {
                 <div className="text-blue-700 text-sm">
                   <p className="font-semibold mb-1 text-sm">¡Beneficios de registrarte!</p>
                   <ul className="text-xs space-y-0.5 leading-relaxed">
-                    <li>• Hasta 5 mascotas registradas</li>
+                    <li>• Unlimited conversations with people in your life</li>
                     <li>• Respuestas personalizadas</li>
                     <li>• Historial de consultas</li>
                     <li>• Recomendaciones específicas</li>

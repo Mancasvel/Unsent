@@ -16,7 +16,7 @@ export const restaurantData = [
       {
         _id: "dish_001",
         name: "Pasta Primavera Vegana",
-        description: "Deliciosa pasta con verduras de temporada, sin productos animales",
+        description: "Delicious pasta with seasonal vegetables, plant-based",
         ingredients: ["pasta", "calabacín", "tomate", "albahaca", "aceite de oliva", "ajo", "pimiento rojo"],
         tags: ["vegano", "vegetariano", "italiano", "rápido", "saludable"],
         price: 12.50,

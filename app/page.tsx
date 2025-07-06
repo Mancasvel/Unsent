@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input, Button, Card, CardBody, Divider, Spinner } from '@heroui/react'
 import { NavbarComponent } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
-import PetRegistrationForm from '@/components/PetRegistrationForm'
+
 import { useAuth } from '@/lib/AuthContext'
 import { motion } from 'framer-motion'
 import Link from 'next/link'

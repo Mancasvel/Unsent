@@ -78,7 +78,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
               Unsent
             </h1>
             <p className="text-xs sm:text-sm text-gray-500">
-              Tu compañero digital para el bienestar de mascotas
+              Process emotions through writing unsent messages
             </p>
           </div>
         </ModalHeader>

@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { EmotionStage } from './emotionStages'
+export type EmotionStage = 'denial' | 'anger' | 'bargaining' | 'depression' | 'acceptance'
 
 // Tipos para el Usuario
 export interface User {

@@ -1,14 +1,16 @@
-# Sistema de Conversaciones Persistentes - Unsent
+# Persistent Conversation System - Unsent
 
-Este sistema permite mantener conversaciones continuas y contextuales con mascotas virtuales, guardando todo el historial en MongoDB.
+This system enables continuous and contextual conversations with AI personas representing people in your life, storing the complete history in MongoDB.
 
-## ✨ Características Principales
+## ✨ Key Features
 
-- 🔄 **Historial Persistente**: Todas las conversaciones se guardan automáticamente
-- 📊 **Límite Inteligente**: Máximo 20 mensajes para optimizar rendimiento
-- 👤 **Multi-Usuario**: Soporte para usuarios autenticados y anónimos
-- 🔒 **Seguro**: Manejo eficiente de múltiples usuarios simultáneos
-- 🧹 **Auto-Limpieza**: Elimina conversaciones antiguas automáticamente
+- 🔄 **Persistent History**: All conversations are automatically saved
+- 📊 **Smart Limits**: Maximum 20 messages to optimize performance
+- 👤 **Multi-User**: Support for authenticated and anonymous users
+- 🔒 **Secure**: Efficient handling of multiple simultaneous users
+- 🧹 **Auto-Cleanup**: Automatically removes old conversations
+- 🎯 **Emotional Journey**: Progress tracking through 5 emotional stages
+- 💌 **Person Profiles**: AI responds as specific people based on relationship context
 
 ## 🏗️ Arquitectura del Sistema
 
@@ -44,7 +46,7 @@ interface Conversation {
   createdAt: Date
   updatedAt: Date
   metadata?: {
-    userPet?: any
+    personProfile?: any
     lastQuery?: string
   }
 }
@@ -114,45 +116,45 @@ export default function ChatComponent() {
 }
 ```
 
-### Ejemplo Avanzado - Usuario Autenticado con Mascota
+### Advanced Example - Authenticated User with Person Profile
 
 ```tsx
-// components/PetChatComponent.tsx
+// components/PersonChatComponent.tsx
 import { useUserConversation } from '@/lib/useConversation'
 import { useAuth } from '@/lib/AuthContext'
 
-export default function PetChatComponent() {
+export default function PersonChatComponent() {
   const { user } = useAuth()
-  const [userPet, setUserPet] = useState(null)
+  const [personProfile, setPersonProfile] = useState(null)
   
   const {
     messages,
     isLoading,
     error,
     sendMessage,
-    getConversationStats,
+    getConversationSummary,
     conversationId
   } = useUserConversation(user?.id || '', true)
 
-  // Cargar mascota del usuario
+  // Load selected person profile
   useEffect(() => {
     if (user?.id) {
-      loadUserPet(user.id).then(setUserPet)
+      loadPersonProfile(user.id).then(setPersonProfile)
     }
   }, [user])
 
   const handleSendMessage = async (message: string) => {
-    if (!userPet) {
-      alert('Primero registra tu mascota')
+    if (!personProfile) {
+      alert('First select who you\'re writing to')
       return
     }
 
     const response = await sendMessage(message, {
-      userPet,
+      personProfile,
       onSuccess: (data) => {
-        // Manejar respuesta específica de la mascota
-        if (data.petVoiceResponse?.hasRegisteredPet) {
-          console.log(`${userPet.nombre} respondió:`, data.petVoiceResponse.voiceMessage)
+        // Handle specific person response
+        if (data.personResponse?.content) {
+          console.log(`${personProfile.name} responded:`, data.personResponse.content)
         }
       }
     })
@@ -160,37 +162,37 @@ export default function PetChatComponent() {
     return response
   }
 
-  const stats = getConversationStats()
+  const summary = getConversationSummary()
 
   return (
-    <div className="pet-chat">
-      {/* Header con información de la mascota */}
-      {userPet && (
-        <div className="pet-header">
-          <h3>Hablando con {userPet.nombre}</h3>
-          <p>{userPet.raza} • {userPet.edad} años</p>
-          <small>Mensajes: {stats.totalMessages}</small>
+    <div className="person-chat">
+      {/* Header with person information */}
+      {personProfile && (
+        <div className="person-header">
+          <h3>Writing to {personProfile.name}</h3>
+          <p>{personProfile.relationship} • {personProfile.context}</p>
+          <small>Messages: {summary.totalMessages}</small>
         </div>
       )}
 
-      {/* Chat messages con estilo personalizado */}
-      <div className="pet-messages">
+      {/* Chat messages with emotional styling */}
+      <div className="emotion-messages">
         {messages.map((msg, index) => (
-          <PetMessageBubble 
+          <EmotionalMessageBubble 
             key={index}
             message={msg}
-            pet={userPet}
-            isFromPet={msg.role === 'assistant'}
+            person={personProfile}
+            isFromPerson={msg.role === 'assistant'}
           />
         ))}
       </div>
 
-      {/* Input especializado para mascotas */}
-      <PetMessageInput 
+      {/* Input specialized for emotional writing */}
+      <EmotionalMessageInput 
         onSend={handleSendMessage}
         isLoading={isLoading}
-        pet={userPet}
-        placeholder={`Pregúntale algo a ${userPet?.nombre}...`}
+        person={personProfile}
+        placeholder={`Write your unsent message to ${personProfile?.name}...`}
       />
     </div>
   )

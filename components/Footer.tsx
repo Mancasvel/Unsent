@@ -11,86 +11,85 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white text-lg font-bold">🐾</span>
+                <span className="text-white text-lg font-bold">💌</span>
               </div>
               <span className="text-2xl font-bold text-white">Unsent</span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed">
-              La plataforma de inteligencia artificial que entiende a tu mascota. 
-              Recomendaciones personalizadas de entrenamiento, nutrición y bienestar 
-              para perros y gatos.
+              An augmented reality game with yourself. Process emotions through writing 
+              unsent messages. Journey through 5 stages toward forgiveness and release.
             </p>
             <div className="flex gap-4 text-sm">
-              <span className="text-slate-400">🐕 Perros</span>
-              <span className="text-slate-400">🐱 Gatos</span>
-              <span className="text-slate-400">🤖 IA</span>
+              <span className="text-slate-400">💭 Process</span>
+              <span className="text-slate-400">🔥 Release</span>
+              <span className="text-slate-400">🌅 Heal</span>
             </div>
           </div>
 
-          {/* Servicios */}
+          {/* Journey */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg text-white">Servicios</h3>
+            <h3 className="font-semibold text-lg text-white">Journey</h3>
             <div className="space-y-3">
-              <a href="/entrenamiento" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Entrenamiento
+              <a href="/conversations" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                Conversations
               </a>
-              <a href="/nutricion" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Nutrición
+              <a href="/new-conversation" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                New Message
               </a>
-              <a href="/bienestar" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Bienestar
+              <a href="/people" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                People
               </a>
-              <a href="/veterinarios" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Veterinarios
+              <a href="/echoes" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                Echoes
               </a>
-              <a href="/mascotas" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Gestión de mascotas
-              </a>
-            </div>
-          </div>
-
-          {/* Soporte y Recursos */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-lg text-white">Soporte</h3>
-            <div className="space-y-3">
-              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Centro de ayuda
-              </a>
-              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Preguntas frecuentes
-              </a>
-              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Guías de cuidado
-              </a>
-              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Contacto
-              </a>
-              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Blog de mascotas
+              <a href="/demo-conversation" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                Demo Experience
               </a>
             </div>
           </div>
 
-          {/* Empresa y Comunidad */}
+          {/* Support & Resources */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg text-white">Empresa</h3>
+            <h3 className="font-semibold text-lg text-white">Support</h3>
             <div className="space-y-3">
               <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Acerca de nosotros
+                Help Center
               </a>
               <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Misión y valores
+                How to Play
               </a>
               <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Equipo
+                Emotional Stages Guide
               </a>
               <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
-                Trabajar con nosotros
+                Contact
+              </a>
+              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                Blog
+              </a>
+            </div>
+          </div>
+
+          {/* Company & Community */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg text-white">Company</h3>
+            <div className="space-y-3">
+              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                About Us
+              </a>
+              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                Mission & Values
+              </a>
+              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                Team
+              </a>
+              <a href="#" className="block text-slate-400 hover:text-white transition-colors text-sm">
+                Join Us
               </a>
             </div>
             
             <div className="pt-4">
-              <h4 className="font-medium mb-3 text-white">Síguenos</h4>
+              <h4 className="font-medium mb-3 text-white">Follow Us</h4>
               <div className="flex gap-3">
                 <a href="#" className="text-slate-400 hover:text-white transition-colors">
                   <span className="sr-only">Instagram</span>
@@ -119,22 +118,22 @@ export function Footer() {
         <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
           <div className="flex flex-wrap gap-6 text-sm">
             <a href="#" className="text-slate-400 hover:text-white transition-colors">
-              Términos de servicio
+              Terms of Service
             </a>
             <a href="#" className="text-slate-400 hover:text-white transition-colors">
-              Política de privacidad
+              Privacy Policy
             </a>
             <a href="#" className="text-slate-400 hover:text-white transition-colors">
-              Política de cookies
+              Cookie Policy
             </a>
             <a href="#" className="text-slate-400 hover:text-white transition-colors">
-              Aviso legal
+              Legal Notice
             </a>
           </div>
           
           <div className="text-sm text-slate-500 text-center lg:text-right">
-            <p>© 2024 Unsent. Todos los derechos reservados.</p>
-            <p className="text-xs mt-1">Hecho con ❤️ para el bienestar de las mascotas</p>
+            <p>© 2024 Unsent. All rights reserved.</p>
+            <p className="text-xs mt-1">Made with ❤️ for emotional healing</p>
           </div>
         </div>
       </div>

@@ -20,13 +20,14 @@ export interface UseConversationOptions {
 }
 
 export interface SendMessageOptions {
-  userPet?: any
+  personProfile?: any
+  conversationId?: string
   onSuccess?: (response: any) => void
   onError?: (error: string) => void
 }
 
 /**
- * Hook personalizado para manejar conversaciones persistentes
+ * Custom hook for managing persistent conversations in Unsent
  */
 export function useConversation(options: UseConversationOptions = {}) {
   const [state, setState] = useState<ConversationState>({
@@ -36,13 +37,13 @@ export function useConversation(options: UseConversationOptions = {}) {
     conversationId: null
   })
 
-  // Generar sessionId si no se proporciona userId
+  // Generate sessionId if userId is not provided
   const conversationId = options.userId 
     ? { userId: options.userId }
     : { sessionId: options.sessionId || generateSessionId() }
 
   /**
-   * Genera un sessionId único para usuarios anónimos
+   * Generate a unique sessionId for anonymous users
    */
   function generateSessionId(): string {
     if (typeof window !== 'undefined') {
@@ -57,7 +58,7 @@ export function useConversation(options: UseConversationOptions = {}) {
   }
 
   /**
-   * Carga el historial de conversación desde el servidor
+   * Load conversation history from server
    */
   const loadConversationHistory = useCallback(async () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }))
@@ -99,14 +100,14 @@ export function useConversation(options: UseConversationOptions = {}) {
   }, [conversationId.userId, conversationId.sessionId])
 
   /**
-   * Envía un mensaje y obtiene la respuesta
+   * Send a message and get the response
    */
   const sendMessage = useCallback(async (
     message: string, 
     options: SendMessageOptions = {}
   ) => {
     if (!message.trim()) {
-      const error = 'El mensaje no puede estar vacío'
+      const error = 'Message cannot be empty'
       setState(prev => ({ ...prev, error }))
       options.onError?.(error)
       return null
@@ -115,7 +116,7 @@ export function useConversation(options: UseConversationOptions = {}) {
     setState(prev => ({ ...prev, isLoading: true, error: null }))
 
     try {
-      // Agregar mensaje del usuario inmediatamente a la UI
+      // Add user message immediately to UI
       const userMessage: ConversationMessage = {
         role: 'user',
         content: message,
@@ -127,7 +128,7 @@ export function useConversation(options: UseConversationOptions = {}) {
         messages: [...prev.messages, userMessage]
       }))
 
-      // Enviar al servidor
+      // Send to server
       const response = await fetch('/api/parse', {
         method: 'POST',
         headers: {
@@ -135,7 +136,8 @@ export function useConversation(options: UseConversationOptions = {}) {
         },
         body: JSON.stringify({
           query: message,
-          userPet: options.userPet,
+          personProfile: options.personProfile,
+          conversationId: options.conversationId,
           ...conversationId
         }),
       })
@@ -146,14 +148,15 @@ export function useConversation(options: UseConversationOptions = {}) {
 
       const data = await response.json()
 
-      // Crear mensaje de respuesta del asistente
+      // Create assistant response message
       const assistantMessage: ConversationMessage = {
         role: 'assistant',
         content: JSON.stringify({
-          summary: data.summary,
-          petVoiceResponse: data.petVoiceResponse,
-          recommendations: data.recommendations?.length || 0,
-          total: data.total
+          emotionalAnalysis: data.emotionalAnalysis,
+          personResponse: data.personResponse,
+          mysteriousFragment: data.mysteriousFragment,
+          stage: data.stage,
+          progression: data.progression
         }),
         timestamp: new Date()
       }
@@ -168,7 +171,7 @@ export function useConversation(options: UseConversationOptions = {}) {
       return data
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error enviando mensaje'
+      const errorMessage = error instanceof Error ? error.message : 'Error sending message'
       
       setState(prev => ({
         ...prev,
@@ -183,7 +186,7 @@ export function useConversation(options: UseConversationOptions = {}) {
   }, [conversationId])
 
   /**
-   * Limpia la conversación actual
+   * Clear current conversation
    */
   const clearConversation = useCallback(() => {
     setState({
@@ -193,16 +196,16 @@ export function useConversation(options: UseConversationOptions = {}) {
       conversationId: null
     })
 
-    // Limpiar sessionId si existe
+    // Clear sessionId if exists
     if (typeof window !== 'undefined' && conversationId.sessionId) {
       localStorage.removeItem('unsent_session_id')
     }
   }, [conversationId.sessionId])
 
   /**
-   * Obtiene estadísticas de la conversación actual
+   * Get conversation summary
    */
-  const getConversationStats = useCallback(() => {
+  const getConversationSummary = useCallback(() => {
     const userMessages = state.messages.filter(msg => msg.role === 'user')
     const assistantMessages = state.messages.filter(msg => msg.role === 'assistant')
     
@@ -210,47 +213,35 @@ export function useConversation(options: UseConversationOptions = {}) {
       totalMessages: state.messages.length,
       userMessages: userMessages.length,
       assistantMessages: assistantMessages.length,
-      hasConversation: state.messages.length > 0,
-      conversationId: state.conversationId
+      lastMessageTime: state.messages.length > 0 ? state.messages[state.messages.length - 1].timestamp : null
     }
-  }, [state.messages, state.conversationId])
+  }, [state.messages])
 
-  // Auto-cargar historial si está habilitado
+  // Auto-load conversation if requested
   useEffect(() => {
-    if (options.autoLoad !== false) {
+    if (options.autoLoad) {
       loadConversationHistory()
     }
-  }, [loadConversationHistory, options.autoLoad])
+  }, [options.autoLoad, loadConversationHistory])
 
   return {
-    // Estado
-    messages: state.messages,
-    isLoading: state.isLoading,
-    error: state.error,
-    conversationId: state.conversationId,
-    
-    // Acciones
+    ...state,
     sendMessage,
-    loadConversationHistory,
     clearConversation,
-    
-    // Utilidades
-    getConversationStats,
-    
-    // Información del identificador
-    identifier: conversationId
+    loadConversationHistory,
+    getConversationSummary
   }
 }
 
 /**
- * Hook simplificado para usuarios autenticados
+ * Hook for authenticated user conversations
  */
 export function useUserConversation(userId: string, autoLoad = true) {
   return useConversation({ userId, autoLoad })
 }
 
 /**
- * Hook simplificado para usuarios anónimos
+ * Hook for anonymous session conversations
  */
 export function useSessionConversation(autoLoad = true) {
   return useConversation({ autoLoad })

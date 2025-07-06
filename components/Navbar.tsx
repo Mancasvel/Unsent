@@ -20,10 +20,10 @@ import { useAuth } from '@/lib/AuthContext'
 import { AuthModal } from './AuthModal'
 
 interface NavbarComponentProps {
-  onRegisterPet?: () => void
+  onNewConversation?: () => void
 }
 
-export function NavbarComponent({ onRegisterPet }: NavbarComponentProps) {
+export function NavbarComponent({ onNewConversation }: NavbarComponentProps) {
   const { user, logout, loading } = useAuth()
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login')
@@ -63,7 +63,7 @@ export function NavbarComponent({ onRegisterPet }: NavbarComponentProps) {
               <span className="text-xl font-bold text-slate-900">
                 Unsent
               </span>
-              <span className="text-xs text-slate-500 -mt-1">Entiende a tu mascota</span>
+              <span className="text-xs text-slate-500 -mt-1">Process emotions through writing</span>
             </div>
           </Link>
         </NavbarBrand>
@@ -71,42 +71,42 @@ export function NavbarComponent({ onRegisterPet }: NavbarComponentProps) {
         {/* Contenido central - navegación */}
         <NavbarContent className="hidden lg:flex gap-1" justify="center">
           <NavbarItem>
-            <Link href="/entrenamiento">
+            <Link href="/conversations">
               <Button
                 variant="ghost"
                 className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium"
               >
-                Entrenamiento
+                Conversations
               </Button>
             </Link>
           </NavbarItem>
           <NavbarItem>
-            <Link href="/nutricion">
+            <Link href="/people">
               <Button
                 variant="ghost"
                 className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium"
               >
-                Nutrición
+                People
               </Button>
             </Link>
           </NavbarItem>
           <NavbarItem>
-            <Link href="/bienestar">
+            <Link href="/echoes">
               <Button
                 variant="ghost"
                 className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium"
               >
-                Bienestar
+                Echoes
               </Button>
             </Link>
           </NavbarItem>
           <NavbarItem>
-            <Link href="/veterinarios">
+            <Link href="/demo-conversation">
               <Button
                 variant="ghost"
                 className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium"
               >
-                Veterinarios
+                Demo
               </Button>
             </Link>
           </NavbarItem>
@@ -117,34 +117,15 @@ export function NavbarComponent({ onRegisterPet }: NavbarComponentProps) {
           {user ? (
             // Usuario autenticado
             <>
-              {/* Botón de mascotas */}
+              {/* Botón de nueva conversación */}
               <NavbarItem className="hidden sm:flex">
-                {user.petCount > 0 ? (
-                  <Link href="/mascotas">
-                    <Button
-                      variant="bordered"
-                      className="border-slate-200 hover:border-slate-300 text-slate-700 font-medium"
-                      endContent={
-                        <Chip 
-                          size="sm" 
-                          variant="flat" 
-                          className="bg-slate-100 text-slate-700 text-xs font-medium"
-                        >
-                          {user.petCount}/5
-                        </Chip>
-                      }
-                    >
-                      Mis mascotas
-                    </Button>
-                  </Link>
-                ) : (
+                <Link href="/new-conversation">
                   <Button
-                    onClick={onRegisterPet}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
                   >
-                    Registrar mascota
+                    New Message
                   </Button>
-                )}
+                </Link>
               </NavbarItem>
 
               {/* Dropdown de usuario */}
@@ -173,29 +154,31 @@ export function NavbarComponent({ onRegisterPet }: NavbarComponentProps) {
                       <div className="w-full h-px bg-slate-200" />
                     </DropdownItem>
                     <DropdownItem 
-                      key="pets" 
-                      startContent={<span className="text-slate-400">🐾</span>} 
-                      textValue="pets" 
-                      href="/mascotas"
+                      key="conversations" 
+                      startContent={<span className="text-slate-400">💌</span>} 
+                      textValue="conversations" 
+                      href="/conversations"
                       className="text-slate-700"
                     >
-                      Mis mascotas ({user.petCount}/5)
+                      My Conversations
                     </DropdownItem>
                     <DropdownItem 
-                      key="plans" 
-                      startContent={<span className="text-slate-400">📋</span>} 
-                      textValue="plans"
+                      key="people" 
+                      startContent={<span className="text-slate-400">👤</span>} 
+                      textValue="people"
+                      href="/people"
                       className="text-slate-700"
                     >
-                      Mis planes
+                      My People
                     </DropdownItem>
                     <DropdownItem 
-                      key="history" 
-                      startContent={<span className="text-slate-400">📖</span>} 
-                      textValue="history"
+                      key="echoes" 
+                      startContent={<span className="text-slate-400">🌙</span>} 
+                      textValue="echoes"
+                      href="/echoes"
                       className="text-slate-700"
                     >
-                      Historial
+                      Echoes
                     </DropdownItem>
                     <DropdownItem 
                       key="settings" 
@@ -203,24 +186,26 @@ export function NavbarComponent({ onRegisterPet }: NavbarComponentProps) {
                       textValue="settings"
                       className="text-slate-700"
                     >
-                      Configuración
+                      Settings
                     </DropdownItem>
                     <DropdownItem 
-                      key="help" 
-                      startContent={<span className="text-slate-400">❓</span>} 
-                      textValue="help"
+                      key="upgrade" 
+                      startContent={<span className="text-slate-400">✨</span>} 
+                      textValue="upgrade"
                       className="text-slate-700"
                     >
-                      Ayuda
+                      Upgrade to Premium
+                    </DropdownItem>
+                    <DropdownItem key="divider2" textValue="divider2">
+                      <div className="w-full h-px bg-slate-200" />
                     </DropdownItem>
                     <DropdownItem 
                       key="logout" 
-                      className="text-red-600" 
-                      startContent={<span className="text-red-400">→</span>}
                       onClick={handleLogout}
+                      className="text-red-600"
                       textValue="logout"
                     >
-                      Cerrar sesión
+                      Sign Out
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
@@ -231,19 +216,20 @@ export function NavbarComponent({ onRegisterPet }: NavbarComponentProps) {
             <>
               <NavbarItem className="hidden sm:flex">
                 <Button
-                  variant="ghost"
-                  onClick={handleLogin}
+                  variant="light"
+                  onPress={handleLogin}
                   className="text-slate-600 hover:text-slate-900 font-medium"
                 >
-                  Iniciar Sesión
+                  Sign In
                 </Button>
               </NavbarItem>
               <NavbarItem>
                 <Button
-                  onClick={handleRegister}
+                  color="primary"
+                  onPress={handleRegister}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
                 >
-                  Registrarse
+                  Get Started
                 </Button>
               </NavbarItem>
             </>
@@ -251,11 +237,11 @@ export function NavbarComponent({ onRegisterPet }: NavbarComponentProps) {
         </NavbarContent>
       </Navbar>
 
-      {/* Modal de autenticación */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        defaultMode={authModalMode}
+        mode={authModalMode}
+        onSwitchMode={(mode) => setAuthModalMode(mode)}
       />
     </>
   )

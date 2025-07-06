@@ -1,142 +1,156 @@
-export enum EmotionStage {
-  DENIAL = 'denial',
-  ANGER = 'anger',
-  BARGAINING = 'bargaining',
-  DEPRESSION = 'depression',
-  ACCEPTANCE = 'acceptance'
-}
+export type EmotionStage = 'denial' | 'anger' | 'bargaining' | 'depression' | 'acceptance'
 
-export interface EmotionStageData {
+export interface EmotionStageConfig {
+  id: EmotionStage
   name: string
+  poeticName: string
   description: string
-  keywords: string[]
-  minScore: number
-  maxScore: number
   color: string
-  glowColor: string
-  aiPrompt: string
-  mysteriousFragments: string[]
+  gradient: string
+  range: [number, number]
+  keywords: string[]
+  fragments: string[]
+  threshold: number
 }
 
-export const EMOTION_STAGES: Record<EmotionStage, EmotionStageData> = {
-  [EmotionStage.DENIAL]: {
-    name: 'Negación',
-    description: 'Negándose a aceptar la realidad',
-    keywords: ['no', 'nunca', 'imposible', 'mentira', 'no es cierto', 'no puede ser', 'equivocado'],
-    minScore: 0,
-    maxScore: 20,
-    color: '#6366f1',
-    glowColor: '#8b5cf6',
-    aiPrompt: 'Responde con comprensión y gentileza, validando los sentimientos sin confrontar la negación directamente.',
-    mysteriousFragments: [
-      'A veces la verdad duele más que la mentira...',
-      'Los ojos cerrados no hacen desaparecer la realidad',
-      'Hay cosas que el corazón tarda en aceptar'
-    ]
+export const emotionStages: EmotionStageConfig[] = [
+  {
+    id: 'denial',
+    name: 'Denial',
+    poeticName: 'The Fog',
+    description: 'Nothing feels real. Time is slowed. You move through memories like smoke.',
+    color: '#64b5f6',
+    gradient: 'from-blue-400 to-cyan-400',
+    range: [0, 20],
+    keywords: [
+      'not real', 'impossible', 'mistake', 'dream', 'wake up', 'temporary',
+      'coming back', 'not happening', 'can\'t be true', 'must be wrong',
+      'doesn\'t feel real', 'like a dream', 'surreal', 'disconnected'
+    ],
+    fragments: [
+      'Reality is just a suggestion whispered in the dark.',
+      'Some truths are too heavy for the mind to hold at once.',
+      'The fog protects what the heart cannot yet bear to see.',
+      'Time moves differently in the space between what was and what is.',
+      'Even the impossible becomes possible when you refuse to believe.'
+    ],
+    threshold: 20
   },
-  [EmotionStage.ANGER]: {
-    name: 'Ira',
-    description: 'Sintiendo rabia y frustración',
-    keywords: ['odio', 'furioso', 'enojado', 'injusto', 'culpa', 'idiota', 'estúpido', 'maldito'],
-    minScore: 21,
-    maxScore: 40,
-    color: '#ef4444',
-    glowColor: '#f97316',
-    aiPrompt: 'Responde con calma y comprensión, ayudando a canalizar la ira de manera constructiva.',
-    mysteriousFragments: [
-      'El fuego que quema por dentro busca salida...',
-      'La rabia es dolor vestido de fuerza',
-      'Incluso las tormentas encuentran su calma'
-    ]
+  {
+    id: 'anger',
+    name: 'Anger',
+    poeticName: 'The Flame',
+    description: 'There\'s heat behind the silence. Words burn behind your teeth. Rage is a form of love, twisted.',
+    color: '#ff6b6b',
+    gradient: 'from-red-400 to-orange-400',
+    range: [21, 40],
+    keywords: [
+      'angry', 'furious', 'rage', 'hate', 'betrayed', 'unfair', 'wrong',
+      'lied', 'hurt', 'pain', 'destroyed', 'ruined', 'never forgive',
+      'how dare', 'selfish', 'cruel', 'bastard', 'bitch', 'asshole'
+    ],
+    fragments: [
+      'The fire in your chest is love looking for somewhere to go.',
+      'Anger is just pain wearing a mask of strength.',
+      'Some flames burn everything down. Others light the way forward.',
+      'The heat you feel is the ghost of what you once cherished.',
+      'Rage is the heart\'s way of protecting what it cannot bear to lose.'
+    ],
+    threshold: 40
   },
-  [EmotionStage.BARGAINING]: {
-    name: 'Negociación',
-    description: 'Buscando alternativas y soluciones',
-    keywords: ['si tan solo', 'ojalá', 'quizás', 'podría', 'debería', 'habría', 'tal vez', 'por favor'],
-    minScore: 41,
-    maxScore: 60,
-    color: '#eab308',
-    glowColor: '#f59e0b',
-    aiPrompt: 'Responde con esperanza cautelosa, ayudando a explorar posibilidades mientras mantienes los pies en la tierra.',
-    mysteriousFragments: [
-      'Algunos caminos se cierran para que otros se abran...',
-      'El tiempo no se negocia, pero los corazones sí sanan',
-      'Las respuestas no siempre vienen cuando las pedimos'
-    ]
+  {
+    id: 'bargaining',
+    name: 'Bargaining',
+    poeticName: 'The Loop',
+    description: 'What if? What if I had said it? What if they stayed? Your mind loops, desperate for a door.',
+    color: '#ffd54f',
+    gradient: 'from-yellow-400 to-amber-400',
+    range: [41, 60],
+    keywords: [
+      'what if', 'if only', 'maybe', 'could have', 'should have', 'would have',
+      'different', 'change', 'undo', 'go back', 'try again', 'one more chance',
+      'please', 'negotiate', 'compromise', 'trade', 'anything'
+    ],
+    fragments: [
+      'The past is a door that only opens from the other side.',
+      'Your mind builds bridges to places that no longer exist.',
+      'What if is the cruelest question the heart can ask.',
+      'Time is not a river you can swim upstream.',
+      'The loop is a cage built from the blueprints of regret.'
+    ],
+    threshold: 60
   },
-  [EmotionStage.DEPRESSION]: {
-    name: 'Depresión',
-    description: 'Sintiendo tristeza profunda y vacío',
-    keywords: ['triste', 'vacío', 'solo', 'perdido', 'dolor', 'llorar', 'oscuridad', 'nada'],
-    minScore: 61,
-    maxScore: 80,
-    color: '#6b7280',
-    glowColor: '#9ca3af',
-    aiPrompt: 'Responde con calidez y compasión, ofreciendo consuelo y recordando que la tristeza es temporal.',
-    mysteriousFragments: [
-      'En la oscuridad más profunda, la luz es más preciada...',
-      'Los corazones rotos aprenden a latir de nuevo',
-      'El dolor que no se habla se vuelve susurro en el alma'
-    ]
+  {
+    id: 'depression',
+    name: 'Depression',
+    poeticName: 'The Hollow',
+    description: 'Everything echoes. The world shrinks. You sit inside yourself and hear nothing back.',
+    color: '#78909c',
+    gradient: 'from-gray-400 to-slate-400',
+    range: [61, 80],
+    keywords: [
+      'empty', 'hollow', 'numb', 'nothing', 'pointless', 'alone', 'isolated',
+      'dark', 'heavy', 'tired', 'exhausted', 'give up', 'hopeless',
+      'meaningless', 'void', 'silence', 'echo', 'distant'
+    ],
+    fragments: [
+      'The hollow is not emptiness. It is the space where healing begins.',
+      'Even the deepest well eventually finds water.',
+      'Silence is not the absence of sound. It is the pause between breaths.',
+      'The echo you hear is your own voice calling you home.',
+      'In the hollow, you learn the difference between alone and lonely.'
+    ],
+    threshold: 80
   },
-  [EmotionStage.ACCEPTANCE]: {
-    name: 'Aceptación',
-    description: 'Encontrando paz y comprensión',
-    keywords: ['acepto', 'paz', 'entiendo', 'está bien', 'gracias', 'perdón', 'libre', 'soltar'],
-    minScore: 81,
-    maxScore: 100,
-    color: '#10b981',
-    glowColor: '#059669',
-    aiPrompt: 'Responde con sabiduría y serenidad, celebrando el crecimiento y la fortaleza encontrada.',
-    mysteriousFragments: [
-      'La paz llega cuando dejamos de luchar contra lo inevitable...',
-      'Soltar no es perder, es elegir ser libre',
-      'El alma que acepta encuentra su hogar en cualquier lugar'
-    ]
+  {
+    id: 'acceptance',
+    name: 'Acceptance',
+    poeticName: 'The Shore',
+    description: 'After the storm, you arrive somewhere new. You still carry it, but it carries you too.',
+    color: '#81c784',
+    gradient: 'from-green-400 to-emerald-400',
+    range: [81, 100],
+    keywords: [
+      'accept', 'peace', 'understand', 'forgive', 'let go', 'release',
+      'grateful', 'learned', 'grown', 'stronger', 'okay', 'ready',
+      'closure', 'complete', 'whole', 'free', 'light', 'shore'
+    ],
+    fragments: [
+      'The shore is not the end of the storm. It is the beginning of calm.',
+      'You carry the ocean with you, but you are no longer drowning.',
+      'Forgiveness is not forgetting. It is choosing to remember differently.',
+      'The lighthouse was always there. You just had to learn to see it.',
+      'Some journeys end not with arrival, but with the courage to rest.'
+    ],
+    threshold: 100
   }
+]
+
+export const getStageByScore = (score: number): EmotionStageConfig => {
+  return emotionStages.find(stage => 
+    score >= stage.range[0] && score <= stage.range[1]
+  ) || emotionStages[0]
 }
 
-/**
- * Determina la etapa emocional basada en el puntaje
- */
-export function getEmotionStage(score: number): EmotionStage {
-  for (const stage of Object.values(EmotionStage)) {
-    const stageData = EMOTION_STAGES[stage]
-    if (score >= stageData.minScore && score <= stageData.maxScore) {
-      return stage
-    }
-  }
-  return EmotionStage.DENIAL // Default
+export const getStageColor = (stage: EmotionStage): string => {
+  const stageConfig = emotionStages.find(s => s.id === stage)
+  return stageConfig?.color || '#64b5f6'
 }
 
-/**
- * Obtiene un fragmento misterioso aleatorio para la etapa actual
- */
-export function getRandomFragment(stage: EmotionStage): string {
-  const fragments = EMOTION_STAGES[stage].mysteriousFragments
-  return fragments[Math.floor(Math.random() * fragments.length)]
+export const getStageGradient = (stage: EmotionStage): string => {
+  const stageConfig = emotionStages.find(s => s.id === stage)
+  return stageConfig?.gradient || 'from-blue-400 to-cyan-400'
 }
 
-/**
- * Verifica si el usuario está listo para el ritual de cierre
- */
-export function isReadyForClosure(stage: EmotionStage, score: number): boolean {
-  return stage === EmotionStage.ACCEPTANCE && score >= 90
+export const getNextStage = (currentStage: EmotionStage): EmotionStage | null => {
+  const currentIndex = emotionStages.findIndex(stage => stage.id === currentStage)
+  return currentIndex < emotionStages.length - 1 ? emotionStages[currentIndex + 1].id : null
 }
 
-/**
- * Obtiene el prompt de IA para la etapa actual
- */
-export function getAIPrompt(stage: EmotionStage): string {
-  return EMOTION_STAGES[stage].aiPrompt
-}
-
-/**
- * Obtiene los colores de tema para la etapa actual
- */
-export function getStageColors(stage: EmotionStage): { color: string; glowColor: string } {
-  return {
-    color: EMOTION_STAGES[stage].color,
-    glowColor: EMOTION_STAGES[stage].glowColor
-  }
+export const getStageProgress = (score: number, stage: EmotionStage): number => {
+  const stageConfig = emotionStages.find(s => s.id === stage)
+  if (!stageConfig) return 0
+  
+  const [min, max] = stageConfig.range
+  return Math.min(100, Math.max(0, ((score - min) / (max - min)) * 100))
 } 

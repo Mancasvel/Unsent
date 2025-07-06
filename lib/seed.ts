@@ -1,268 +1,257 @@
 import { MongoClient } from 'mongodb'
 import * as dotenv from 'dotenv'
 
-// Cargar variables de entorno
+// Load environment variables
 dotenv.config({ path: '.env.local' })
 
 const client = new MongoClient(process.env.MONGODB_URI!)
 
-const samplePetProfiles = [
+// Sample conversation starters for different emotional stages
+const sampleConversationStarters = [
   {
-    breed: "Golden Retriever",
-    category: "Perro",
-    size: "Grande",
-    characteristics: {
-      energy: "Alta",
-      temperament: ["Amigable", "Inteligente", "Devoto", "Activo"],
-      lifespan: "10-12 años",
-      weight: "25-34 kg",
-      exerciseNeeds: "Alto"
-    },
-    commonIssues: ["Displasia de cadera", "Problemas cardíacos", "Obesidad"],
-    recommendations: [
-      {
-        _id: "rec_001",
-        type: "training",
-        title: "Entrenamiento básico de obediencia",
-        description: "Los Golden Retrievers son muy inteligentes y responden bien al refuerzo positivo. Sesiones cortas de 10-15 minutos, 2-3 veces al día.",
-        tags: ["obediencia", "cachorro", "básico", "refuerzo-positivo"],
-        difficulty: "Fácil",
-        duration: "2-4 semanas",
-        ageRange: "8 semanas - 6 meses",
-        image: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=500&h=300&fit=crop"
-      },
-      {
-        _id: "rec_002", 
-        type: "nutrition",
-        title: "Dieta para cachorro Golden Retriever",
-        description: "Alimentación equilibrada rica en proteínas para el crecimiento saludable. 3-4 comidas al día hasta los 6 meses.",
-        tags: ["cachorro", "crecimiento", "proteína", "frecuencia-alta"],
-        difficulty: "Fácil",
-        ageRange: "2-12 meses",
-        portions: "2-3 tazas divididas en 3-4 comidas",
-        image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=500&h=300&fit=crop"
-      },
-      {
-        _id: "rec_003",
-        type: "wellness",
-        title: "Rutina de ejercicio para Golden adulto",
-        description: "Necesitan 60-90 minutos de ejercicio diario. Combina caminatas, natación y juegos de buscar.",
-        tags: ["ejercicio", "adulto", "natación", "juegos"],
-        difficulty: "Moderado",
-        duration: "60-90 minutos diarios",
-        ageRange: "1-8 años",
-        image: "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=500&h=300&fit=crop"
-      }
-    ]
+    category: "Ex-Partner",
+    stage: "denial",
+    title: "I keep thinking you'll come back",
+    description: "A letter to an ex-partner when you're still in denial about the breakup",
+    prompt: "Dear [Name], I know you said it's over, but I can't shake the feeling that we're just taking a break..."
   },
   {
-    breed: "Border Collie", 
-    category: "Perro",
-    size: "Mediano",
-    characteristics: {
-      energy: "Muy Alta",
-      temperament: ["Inteligente", "Enérgico", "Trabajador", "Leal"],
-      lifespan: "12-15 años",
-      weight: "14-20 kg",
-      exerciseNeeds: "Muy Alto"
-    },
-    commonIssues: ["Aburrimiento", "Comportamiento destructivo", "Displasia de cadera"],
-    recommendations: [
-      {
-        _id: "rec_004",
-        type: "training",
-        title: "Estimulación mental para Border Collie",
-        description: "Necesitan desafíos mentales constantes. Usa puzzles, agility y entrenamientos de trucos complejos.",
-        tags: ["estimulación-mental", "puzzles", "agility", "trucos"],
-        difficulty: "Avanzado",
-        duration: "30-45 minutos diarios",
-        ageRange: "6 meses - adulto",
-        image: "https://images.unsplash.com/photo-1551717743-49959800b1f6?w=500&h=300&fit=crop"
-      },
-      {
-        _id: "rec_005",
-        type: "wellness",
-        title: "Plan de ejercicio intensivo",
-        description: "Requieren 2+ horas de actividad física y mental diaria. Incluye correr, frisbee y pastoreo.",
-        tags: ["ejercicio-intensivo", "frisbee", "pastoreo", "resistencia"],
-        difficulty: "Alto",
-        duration: "120+ minutos diarios",
-        ageRange: "1-10 años",
-        image: "https://images.unsplash.com/photo-1551717743-49959800b1f6?w=500&h=300&fit=crop"
-      }
-    ]
+    category: "Ex-Partner", 
+    stage: "anger",
+    title: "How could you do this to me?",
+    description: "An angry message to an ex-partner who hurt you",
+    prompt: "I can't believe you would just throw away everything we had. After all we've been through..."
   },
   {
-    breed: "Persa",
-    category: "Gato",
-    size: "Mediano",
-    characteristics: {
-      energy: "Baja-Moderada",
-      temperament: ["Tranquilo", "Cariñoso", "Dócil", "Independiente"],
-      lifespan: "12-17 años", 
-      weight: "3-5 kg",
-      exerciseNeeds: "Bajo"
-    },
-    commonIssues: ["Problemas respiratorios", "Enredos en el pelaje", "Problemas oculares"],
-    recommendations: [
-      {
-        _id: "rec_006",
-        type: "wellness",
-        title: "Cuidado del pelaje persa",
-        description: "Cepillado diario obligatorio para evitar nudos. Baño mensual y limpieza ocular regular.",
-        tags: ["cepillado", "pelaje-largo", "higiene", "cuidado-diario"],
-        difficulty: "Moderado",
-        duration: "15-20 minutos diarios",
-        ageRange: "Todas las edades",
-        image: "https://images.unsplash.com/photo-1513245543132-31f507417b26?w=500&h=300&fit=crop"
-      },
-      {
-        _id: "rec_007",
-        type: "nutrition",
-        title: "Dieta para gato persa senior",
-        description: "Alimento senior con fibra para control de peso y fácil digestión. Porciones controladas.",
-        tags: ["senior", "control-peso", "fibra", "digestión"],
-        difficulty: "Fácil",
-        ageRange: "7+ años",
-        portions: "1/2 taza dividida en 2 comidas",
-        image: "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=500&h=300&fit=crop"
-      }
-    ]
+    category: "Ex-Partner",
+    stage: "bargaining", 
+    title: "What if we tried one more time?",
+    description: "A desperate attempt to negotiate getting back together",
+    prompt: "I know I said I understood, but what if we could work through this? What if I changed..."
   },
   {
-    breed: "Bulldog Francés",
-    category: "Perro", 
-    size: "Pequeño",
-    characteristics: {
-      energy: "Moderada",
-      temperament: ["Amigable", "Adaptable", "Juguetón", "Alerta"],
-      lifespan: "10-12 años",
-      weight: "8-14 kg", 
-      exerciseNeeds: "Moderado"
-    },
-    commonIssues: ["Problemas respiratorios", "Alergias alimentarias", "Problemas de espalda"],
-    recommendations: [
-      {
-        _id: "rec_008",
-        type: "wellness",
-        title: "Ejercicio adaptado para Bulldog Francés",
-        description: "Ejercicio suave debido a problemas respiratorios. Caminatas cortas en clima fresco.",
-        tags: ["ejercicio-suave", "clima-fresco", "respiración", "caminatas-cortas"],
-        difficulty: "Fácil",
-        duration: "20-30 minutos divididos",
-        ageRange: "1+ años",
-        image: "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&h=300&fit=crop"
-      },
-      {
-        _id: "rec_009",
-        type: "nutrition",
-        title: "Dieta hipoalergénica",
-        description: "Alimento con proteína limitada para perros con alergias. Evitar pollo y granos comunes.",
-        tags: ["hipoalergénico", "proteína-limitada", "sin-granos", "alergias"],
-        difficulty: "Moderado",
-        ageRange: "6 meses+",
-        portions: "1 taza dividida en 2 comidas",
-        image: "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=500&h=300&fit=crop"
-      }
-    ]
+    category: "Ex-Partner",
+    stage: "depression",
+    title: "I miss what we had",
+    description: "A melancholy message about missing the relationship",
+    prompt: "The apartment feels so empty without you. I keep expecting to hear your key in the door..."
   },
   {
-    breed: "Maine Coon",
-    category: "Gato",
-    size: "Grande", 
-    characteristics: {
-      energy: "Moderada-Alta",
-      temperament: ["Sociable", "Inteligente", "Gentil", "Adaptable"],
-      lifespan: "13-14 años",
-      weight: "4-8 kg",
-      exerciseNeeds: "Moderado-Alto"
-    },
-    commonIssues: ["Cardiomiopatía", "Displasia de cadera", "Problemas dentales"],
-    recommendations: [
-      {
-        _id: "rec_010",
-        type: "training",
-        title: "Socialización temprana para Maine Coon",
-        description: "Aprovecha su naturaleza sociable. Exposición gradual a personas, sonidos y situaciones.",
-        tags: ["socialización", "cachorro", "exposición", "gradual"],
-        difficulty: "Fácil",
-        duration: "Primeros 4 meses",
-        ageRange: "8-16 semanas",
-        image: "https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=500&h=300&fit=crop"
-      },
-      {
-        _id: "rec_011",
-        type: "wellness", 
-        title: "Juegos interactivos para gatos grandes",
-        description: "Necesitan juguetes grandes y resistentes. Torres para trepar y juegos de caza simulada.",
-        tags: ["juegos-interactivos", "gato-grande", "trepar", "caza-simulada"],
-        difficulty: "Moderado",
-        duration: "30-45 minutos diarios",
-        ageRange: "6 meses+",
-        image: "https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=500&h=300&fit=crop"
-      }
-    ]
+    category: "Ex-Partner",
+    stage: "acceptance",
+    title: "Thank you for the memories",
+    description: "A peaceful farewell message",
+    prompt: "I want you to know that despite everything, I'm grateful for the time we had together..."
+  },
+  {
+    category: "Family",
+    stage: "denial",
+    title: "We're fine, everything is normal",
+    description: "A message denying family problems",
+    prompt: "I don't know why everyone thinks our family has issues. We're perfectly normal..."
+  },
+  {
+    category: "Family",
+    stage: "anger",
+    title: "You never understood me",
+    description: "An angry message to a family member",
+    prompt: "You always took their side. You never once tried to understand what I was going through..."
+  },
+  {
+    category: "Family",
+    stage: "bargaining",
+    title: "Can we start over?",
+    description: "Trying to negotiate a fresh start with family",
+    prompt: "I know we have our problems, but we're family. Can't we just forget the past and start fresh?"
+  },
+  {
+    category: "Family",
+    stage: "depression",
+    title: "I feel so alone",
+    description: "Expressing loneliness within the family",
+    prompt: "Sometimes I feel like I'm invisible in this family. Like nothing I do matters..."
+  },
+  {
+    category: "Family",
+    stage: "acceptance",
+    title: "I love you despite everything",
+    description: "Accepting the family dynamic with love",
+    prompt: "Our family isn't perfect, but I love you anyway. I've learned to accept us as we are..."
+  },
+  {
+    category: "Deceased",
+    stage: "denial",
+    title: "You can't really be gone",
+    description: "A message of disbelief about someone's death",
+    prompt: "I keep picking up the phone to call you. This can't be real..."
+  },
+  {
+    category: "Deceased",
+    stage: "anger",
+    title: "How could you leave me?",
+    description: "Anger at someone who died",
+    prompt: "How could you just leave? You promised we'd grow old together..."
+  },
+  {
+    category: "Deceased",
+    stage: "bargaining",
+    title: "If I could trade places with you",
+    description: "Bargaining with death or fate",
+    prompt: "I would give anything to trade places with you. Anything to bring you back..."
+  },
+  {
+    category: "Deceased",
+    stage: "depression",
+    title: "The world feels empty without you",
+    description: "Deep sadness about loss",
+    prompt: "Nothing feels the same without you here. The world has lost its color..."
+  },
+  {
+    category: "Deceased",
+    stage: "acceptance",
+    title: "I'll carry you with me",
+    description: "Peaceful acceptance of loss",
+    prompt: "I know you're gone, but I carry you with me in everything I do..."
+  }
+]
+
+// Sample emotional fragments for different stages
+const sampleEmotionalFragments = [
+  {
+    stage: "denial",
+    type: "daily_fragment",
+    title: "Fragments of What Was",
+    content: "Your coffee cup is still in the sink. I left it there on purpose.",
+    color: "#3B82F6"
+  },
+  {
+    stage: "denial",
+    type: "notification",
+    title: "Echoes",
+    content: "I saw someone who looked like you today. For a moment, I forgot.",
+    color: "#3B82F6"
+  },
+  {
+    stage: "anger",
+    type: "daily_fragment", 
+    title: "Burning Words",
+    content: "There are words I want to scream at you. They burn in my throat.",
+    color: "#EF4444"
+  },
+  {
+    stage: "anger",
+    type: "notification",
+    title: "Rage",
+    content: "You left me with all this anger and nowhere to put it.",
+    color: "#EF4444"
+  },
+  {
+    stage: "bargaining",
+    type: "daily_fragment",
+    title: "What If",
+    content: "If I had said something different, would you still be here?",
+    color: "#F59E0B"
+  },
+  {
+    stage: "bargaining",
+    type: "notification",
+    title: "Negotiations",
+    content: "I keep making deals with the universe. None of them work.",
+    color: "#F59E0B"
+  },
+  {
+    stage: "depression",
+    type: "daily_fragment",
+    title: "Empty Spaces",
+    content: "The silence where you used to be is deafening.",
+    color: "#6B7280"
+  },
+  {
+    stage: "depression",
+    type: "notification",
+    title: "Hollow",
+    content: "Some days I feel like I'm made of shadows.",
+    color: "#6B7280"
+  },
+  {
+    stage: "acceptance",
+    type: "daily_fragment",
+    title: "New Light",
+    content: "Today I smiled and it didn't feel like betrayal.",
+    color: "#10B981"
+  },
+  {
+    stage: "acceptance",
+    type: "notification",
+    title: "Peace",
+    content: "I can think of you now without drowning.",
+    color: "#10B981"
   }
 ]
 
 async function seedDatabase() {
   try {
-    console.log('🐾 Conectando a MongoDB...')
+    console.log('💌 Connecting to MongoDB...')
     await client.connect()
     
-    const db = client.db('Pawsitive')
-    const collection = db.collection('pets')
+    const db = client.db('Unsent')
     
-    // Limpiar colección existente
-    console.log('🧹 Limpiando datos existentes...')
-    await collection.deleteMany({})
+    // Clear existing data
+    console.log('🧹 Cleaning existing data...')
+    await db.collection('conversation_starters').deleteMany({})
+    await db.collection('emotional_fragments').deleteMany({})
     
-    // Insertar nuevos datos de mascotas
-    console.log('🐕 Insertando perfiles de mascotas y recomendaciones...')
-    const result = await collection.insertMany(samplePetProfiles)
+    // Insert conversation starters
+    console.log('✍️ Inserting conversation starters...')
+    const startersResult = await db.collection('conversation_starters').insertMany(sampleConversationStarters)
     
-    console.log(`✅ Seeding completado!`)
-    console.log(`🐾 Insertados ${result.insertedCount} perfiles de razas`)
+    // Insert emotional fragments
+    console.log('🌙 Inserting emotional fragments...')
+    const fragmentsResult = await db.collection('emotional_fragments').insertMany(sampleEmotionalFragments)
     
-    // Mostrar estadísticas
-    const totalRecommendations = samplePetProfiles.reduce((total, pet) => total + pet.recommendations.length, 0)
-    console.log(`💡 Total de recomendaciones: ${totalRecommendations}`)
+    console.log(`✅ Seeding completed!`)
+    console.log(`💌 Inserted ${startersResult.insertedCount} conversation starters`)
+    console.log(`🌙 Inserted ${fragmentsResult.insertedCount} emotional fragments`)
     
-    // Estadísticas por tipo
-    const trainingRecs = samplePetProfiles.reduce((total, pet) => 
-      total + pet.recommendations.filter(r => r.type === 'training').length, 0)
-    const nutritionRecs = samplePetProfiles.reduce((total, pet) => 
-      total + pet.recommendations.filter(r => r.type === 'nutrition').length, 0)  
-    const wellnessRecs = samplePetProfiles.reduce((total, pet) => 
-      total + pet.recommendations.filter(r => r.type === 'wellness').length, 0)
+    // Show statistics
+    const stageStats = {}
+    sampleConversationStarters.forEach(starter => {
+      stageStats[starter.stage] = (stageStats[starter.stage] || 0) + 1
+    })
     
-    console.log(`🎓 Entrenamiento: ${trainingRecs} recomendaciones`)
-    console.log(`🥩 Nutrición: ${nutritionRecs} recomendaciones`)
-    console.log(`🧘 Bienestar: ${wellnessRecs} recomendaciones`)
+    console.log(`📊 Conversation starters by stage:`)
+    Object.entries(stageStats).forEach(([stage, count]) => {
+      const stageEmoji = {
+        'denial': '🌫️',
+        'anger': '🔥', 
+        'bargaining': '🔄',
+        'depression': '🌧️',
+        'acceptance': '🌅'
+      }[stage]
+      console.log(`  ${stageEmoji} ${stage}: ${count} starters`)
+    })
     
-    // Crear índices para mejorar el rendimiento de búsqueda
-    console.log('📊 Creando índices...')
-    await collection.createIndex({ "breed": 1 })
-    await collection.createIndex({ "category": 1 })
-    await collection.createIndex({ "size": 1 })
-    await collection.createIndex({ "recommendations.type": 1 })
-    await collection.createIndex({ "recommendations.tags": 1 })
-    await collection.createIndex({ "recommendations.ageRange": 1 })
-    await collection.createIndex({ "characteristics.energy": 1 })
-    await collection.createIndex({ "commonIssues": 1 })
+    // Create indexes for better search performance
+    console.log('📊 Creating indexes...')
+    await db.collection('conversation_starters').createIndex({ "category": 1 })
+    await db.collection('conversation_starters').createIndex({ "stage": 1 })
+    await db.collection('conversation_starters').createIndex({ "title": "text", "description": "text" })
     
-    console.log('✅ Índices creados correctamente')
-    console.log('🎉 Base de datos Pawsitive lista para usar!')
+    await db.collection('emotional_fragments').createIndex({ "stage": 1 })
+    await db.collection('emotional_fragments').createIndex({ "type": 1 })
+    
+    console.log('✅ Indexes created successfully')
+    console.log('🎉 Unsent database ready for emotional journeys!')
     
   } catch (error) {
-    console.error('❌ Error en el seeding:', error)
+    console.error('❌ Error in seeding:', error)
   } finally {
     await client.close()
-    console.log('🔐 Conexión cerrada')
+    console.log('🔐 Connection closed')
   }
 }
 
-// Ejecutar seeding
+// Execute seeding
 if (require.main === module) {
   seedDatabase()
 }

@@ -14,7 +14,8 @@ export interface Conversation {
   createdAt: Date
   updatedAt: Date
   metadata?: {
-    userPet?: any
+    personProfile?: any
+    emotionalStage?: string
     lastQuery?: string
   }
 }

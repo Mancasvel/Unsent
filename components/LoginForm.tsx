@@ -64,7 +64,7 @@ export function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
               ¡Bienvenido de vuelta! 🐾
             </h2>
             <p className="text-sm sm:text-base text-gray-600">
-              Inicia sesión para acceder a tus mascotas
+              Sign in to continue your emotional journey
             </p>
           </div>
 
