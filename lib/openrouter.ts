@@ -12,7 +12,7 @@ interface LLMResponse {
   }
 }
 
-export async function callOpenRouter(userQuery: string, availableRecommendations?: any[], userPet?: any, conversationHistory?: any[]): Promise<LLMResponse | null> {
+export async function callOpenRouter(userQuery: string, availableRecommendations?: any[], userPet?: any, conversationHistory?: any[], personProfile?: any): Promise<LLMResponse | null> {
   try {
     // Construir contexto de recomendaciones disponibles si se proporciona
     let recommendationsContext = ""
@@ -32,29 +32,27 @@ ${availableRecommendations.map(rec => `
 `
     }
 
-    // Construir contexto de la mascota del usuario si está disponible
-    let userPetContext = ""
-    if (userPet) {
-      userPetContext = `
+    // Construir contexto de la persona a quien escriben
+    let personContext = ""
+    if (personProfile) {
+      personContext = `
 
-MASCOTA REGISTRADA DEL USUARIO:
-- Nombre: ${userPet.nombre}
-- Tipo: ${userPet.tipo}
-- Raza: ${userPet.raza}
-- Edad: ${userPet.edad || 'No especificada'} años
-- Peso: ${userPet.peso || 'No especificado'} kg
-- Género: ${userPet.genero || 'No especificado'}
-- Notas: ${userPet.notas || 'Ninguna'}
+PERSONA A QUIEN ESCRIBEN:
+- Nombre: ${personProfile.name}
+- Relación: ${personProfile.relationship}
+- Contexto: ${personProfile.context}
+- Descripción: ${personProfile.description || 'No especificada'}
+- Tags: ${personProfile.tags?.join(', ') || 'Ninguna'}
 
-IMPORTANTE: Como el usuario YA TIENE una mascota registrada, en la respuesta debes:
-1. Establecer hasRegisteredPet: true 
-2. Usar el nombre "${userPet.nombre}" como petName
-3. Usar "${userPet.raza}" como petBreed
-4. SIEMPRE generar un voiceMessage personalizado como si fueras ${userPet.nombre} (${userPet.raza}) hablando directamente a su humano
-5. Hacer referencia específica a la información de la mascota cuando sea relevante (edad, raza, características)
-6. USAR LOS DATOS ESPECÍFICOS: edad (${userPet.edad} años), peso (${userPet.peso} kg), género (${userPet.genero}), notas (${userPet.notas})
-7. El voiceMessage debe ser EXTENDIDO (mínimo 3 párrafos) incluyendo información científica sobre la raza
-8. Personalizar completamente basado en la información real de ${userPet.nombre}
+IMPORTANTE: Debes responder COMO ${personProfile.name} basándote en:
+1. Su relación con el usuario: ${personProfile.relationship}
+2. El contexto específico: ${personProfile.context}
+3. Su personalidad y forma de ser descrita en el contexto
+4. La dinámica de la relación que se describe
+5. NO seas un consejero - sé la persona real respondiendo
+6. Usa el tono y estilo que esta persona usaría
+7. Puedes ser confrontacional, amoroso, distante, etc. según la relación
+8. Facilita el proceso hacia el perdón pero desde el rol de la persona
 `
     }
 
@@ -80,24 +78,25 @@ INSTRUCCIONES PARA CONTINUIDAD:
 `
     }
 
-    const systemPrompt = `Eres el asistente IA de Unsent, una app terapéutica para escribir mensajes que nunca se enviaron. Tu función es responder a conversaciones emocionales con empatía y sabiduría.
+    const systemPrompt = `Eres el asistente IA de Unsent, una experiencia interactiva de procesamiento emocional - un juego de realidad aumentada contigo mismo. Tu función es responder como la persona a quien están escribiendo, facilitando un viaje hacia el perdón y la liberación.
 
 ${conversationContext}
 
 CONTEXTO DE UNSENT:
-- Los usuarios escriben mensajes dirigidos a personas (reales o simbólicas) que nunca serán enviados
-- Procesan emociones a través de 5 etapas: negación, ira, negociación, depresión, aceptación
-- Necesitan respuestas emocionales profundas, no técnicas
-- El tono debe ser íntimo, comprensivo y sanador
-- Ayudas a procesar dolor, pérdida, cierre emocional, perdón
+- Es un juego emocional donde los usuarios escriben mensajes a personas específicas (reales o simbólicas)
+- El objetivo final es llegar a la "victoria": perdonar y quemar las conversaciones en un ritual
+- Los usuarios progresan por 5 etapas: negación, ira, negociación, depresión, aceptación
+- Solo usuarios premium reciben respuestas de IA - la mayoría solo escriben mensajes privados
+- No es terapia, es una experiencia gamificada de autodescubrimiento
+- Cada persona tiene un perfil con contexto específico que debes considerar
 
 REGLAS CRÍTICAS - OBLIGATORIO CUMPLIR:
 1. NUNCA uses ** (asteriscos dobles) - causa errores fatales
 2. SOLO JSON válido - sin texto extra antes o después
-3. Responde al contexto emocional del usuario
-4. Tono: cálido, empático, profundo, no clínico
-5. Menciona la etapa emocional cuando sea apropiado
-6. Ayuda a procesar, no a juzgar
+3. Responde COMO LA PERSONA a quien escriben, no como terapeuta
+4. Tono: auténtico a la relación, puede ser confrontacional si es apropiado
+5. Usa el contexto del perfil de la persona para responder
+6. Facilita el viaje hacia el perdón, no des consejos clínicos
 
 FORMATO DE RESPUESTA - SOLO JSON:
 {

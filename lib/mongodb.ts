@@ -5,7 +5,7 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined
 }
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://unsent:unsent2024@cluster0.mongodb.net/"
+const uri = process.env.MONGODB_URI 
 
 const options: MongoClientOptions = {
   tlsAllowInvalidCertificates: true,

@@ -1,6 +1,6 @@
 # 🌙 UNSENT - Messages to the Unspoken
 
-A Progressive Web App for writing messages that will never be sent, with AI-powered emotional analysis and a staging system that guides users toward acceptance.
+An augmented reality game with yourself - write messages to people in your life, progress through emotional stages, and achieve victory by reaching forgiveness and burning old conversations in a digital ritual.
 
 ## ✨ The Five Stages - Elisabeth Kubler-Ross
 
@@ -42,16 +42,17 @@ This stage feels disoriented, dreamlike. "The Fog" captures that unreality and t
 - **Unique user keys**: Each user has their own encryption key
 - **No recovery**: If you lose your device, messages cannot be recovered (by design)
 
-### 🎭 Emotional Experience
-- **5 Stages of Grief**: Denial, Anger, Bargaining, Depression, Acceptance
-- **Automatic Emotional Analysis**: Each message is analyzed to determine emotional stage
-- **Hidden Scoring**: Scoring system that progresses toward acceptance
-- **Mysterious Fragments**: Cryptic messages that appear based on emotional state
+### 🎭 The Emotional Journey
+- **5 Stages**: "The Fog" → "The Flame" → "The Loop" → "The Hollow" → "The Shore"
+- **Person Profiles**: Create detailed profiles for each person you write to
+- **Automatic Progression**: Hidden scoring system tracks your emotional journey
+- **Victory Condition**: Reach "The Shore" (acceptance) and burn conversations in the ritual
 
-### 🤖 Reflective AI (Premium)
-- **Human Responses**: Claude 4 responds with empathy and wisdom
-- **Random Delay**: Responses between 1-24 hours to simulate reflection
-- **Emotional Adaptation**: Tone and content adapted to current stage
+### 🤖 AI Conversations (Premium Only)
+- **Most conversations**: Just private messages to specific people (like a diary)
+- **Premium users**: Get AI responses as if the person is responding back
+- **Authentic Responses**: AI uses person profiles to respond authentically
+- **Random Delay**: Responses between 1-24 hours to simulate real conversations
 
 ### 🔥 Closure Ritual
 - **Acceptance Detection**: When the user is ready, the ritual is offered
@@ -247,16 +248,23 @@ Contextual cryptic messages that appear based on emotional state:
 - Adapt to user's current emotional stage
 - Help guide the healing process
 
-## 🎭 The Experience
+## 🎮 The Game Experience
 
-Unsent is not just an app—it's a digital companion for emotional processing. Users write to:
-- People they've lost
-- Relationships that ended
-- Words they never said
-- Feelings they can't express
-- Themselves in different times
+Unsent is an augmented reality game with yourself. Players write to:
+- **Ex-partners**: Process relationship endings and find closure
+- **Lost friends**: Work through broken friendships
+- **Family members**: Navigate complex family dynamics
+- **Themselves**: Have conversations with past/future selves
+- **Anyone**: Process any relationship or emotional situation
 
-The AI doesn't judge, doesn't offer solutions, but sits with the user in their emotional space, offering gentle reflections when the time is right.
+### 🎯 How to Play
+1. **Create Person Profiles**: Add people you want to write to with context about your relationship
+2. **Write Messages**: Most users just write private messages (like a diary to specific people)
+3. **Premium Experience**: AI responds as that person would, based on your relationship context
+4. **Progress Through Stages**: Move from "The Fog" to "The Shore" through emotional processing
+5. **Achieve Victory**: Reach acceptance and perform the burning ritual to let go
+
+The AI doesn't counsel—it **becomes** the person you're writing to, helping you work through the relationship dynamics toward forgiveness and release.
 
 ## 🌟 Philosophy
 

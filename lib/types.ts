@@ -19,10 +19,28 @@ export interface User {
   encryptionKeyHash?: string // Hash de la clave de cifrado para verificación
 }
 
+// Tipos para perfiles de personas
+export interface PersonProfile {
+  _id?: ObjectId
+  userId: string
+  name: string
+  relationship: string // 'ex-partner', 'friend', 'family', 'colleague', 'stranger', 'self', 'other'
+  description?: string
+  context: string // Contexto personal sobre esta persona
+  avatarUrl?: string
+  createdAt: Date
+  updatedAt: Date
+  conversationCount: number
+  lastConversationAt?: Date
+  tags: string[]
+  isActive: boolean
+}
+
 // Tipos para la Conversación
 export interface Conversation {
   _id?: ObjectId
   userId: string
+  personId: string // Referencia al perfil de la persona
   title: string // Título generado automáticamente o por el usuario
   description?: string // Descripción opcional
   createdAt: Date
@@ -36,7 +54,7 @@ export interface Conversation {
   emotionalScore: number
   currentStage: EmotionStage
   stageHistory: EmotionStageHistory[]
-  aiEnabled: boolean // Si tiene respuestas de IA activadas
+  aiEnabled: boolean // Si tiene respuestas de IA activadas (solo premium)
   aiLastResponse?: Date
   aiNextResponse?: Date // Programada para respuesta con delay
   readyForClosure: boolean
