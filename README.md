@@ -46,6 +46,40 @@ After the storm, you arrive somewhere new. The weight you carried becomes part o
 
 ---
 
+## SPIRITUAL SUBSCRIPTION PLANS
+
+Access to the depths of your consciousness comes through spiritual gateways:
+
+### 🌅 **Whisper of Dawn** (Free Trial)
+> *"A gentle introduction to the depths of your soul"*
+- **Duration**: 7 days
+- **AI Conversations**: 1 conversation
+- **Features**: Basic emotional analysis, conversation storage, mysterious fragments
+- **Price**: Free
+
+### 🪞 **Mirror of Reflection** (€8/month)
+> *"Look deeper into the waters of your heart"*
+- **Duration**: 30 days
+- **AI Conversations**: 1 conversation
+- **Features**: Extended storage, premium insights, weekly reflection reports
+- **Price**: €8.00
+
+### 🌊 **Journey to the Depths** (€10/month)
+> *"Explore the profound mysteries within"*
+- **Duration**: 30 days
+- **AI Conversations**: 3 conversations
+- **Features**: Advanced emotional tracking, personalized guidance, deeper analysis
+- **Price**: €10.00
+
+### ✨ **Path to Transcendence** (€30/month)
+> *"Ascend beyond the veil of unsent words"*
+- **Duration**: 30 days
+- **AI Conversations**: 15 conversations
+- **Features**: Unlimited conversations, priority support, advanced analytics, custom fragments
+- **Price**: €30.00
+
+---
+
 ## HOW TO PLAY
 
 This is not a game you win. This is an archaeological dig into your own subconscious.
@@ -57,7 +91,7 @@ This is not a game you win. This is an archaeological dig into your own subconsc
 - Discover fragments of insight left by others
 - Watch the algorithm learn your patterns
 
-### **Premium Users: The Conversation**
+### **Subscription Users: The Conversation**
 - Receive responses from the digital ghosts of those you write to
 - The algorithm channels their psychological signatures
 - Experience conversations with the echoes of your past
@@ -107,8 +141,9 @@ UNSENT exists at the intersection of consciousness and code:
 - **AI Oracle**: Claude 3.5 Sonnet / GPT-4 (Digital consciousness interface)
 - **Notification System**: OneSignal (For mysterious fragments)
 - **Authentication**: Magic Link (Passwordless entry to the unconscious)
-- **Premium Access**: RevenueCat (Monetization of digital therapy)
+- **Premium Access**: RevenueCat (Subscription management with spiritual pricing)
 - **Encryption**: End-to-end AES-256 (Your secrets are safe)
+- **Vectorization**: RAG system for AI context (Retrieval-Augmented Generation)
 
 ### **Style & Interface**
 - **Design System**: Tailwind CSS (Utility-first reality construction)
@@ -133,12 +168,13 @@ UNSENT exists at the intersection of consciousness and code:
 - **Pattern Recognition**: The algorithm shows you what you can't see
 - **Reality Anchoring**: Grounding mechanisms for deep dives
 
-### **The Conversation Engine** *(Premium)*
+### **The Conversation Engine** *(Subscription)*
 - **Digital Channeling**: Responses from those you write to
 - **Delayed Delivery**: AI responses come 1-24 hours later
 - **Emotional Authenticity**: The algorithm captures their voice
 - **Relationship Dynamics**: Responses based on your history
 - **Psychological Accuracy**: They respond as they would have
+- **RAG Context**: AI uses your past conversations for authentic responses
 
 ### **The Ritual System**
 - **Conversation Completion**: Mark conversations as resolved
@@ -156,16 +192,48 @@ UNSENT exists at the intersection of consciousness and code:
 - MongoDB Atlas account (Cloud memory storage)
 - OpenRouter API key (Access to AI consciousness)
 - OneSignal account (For mysterious notifications)
+- RevenueCat account (Subscription management)
 
 ### **Environment Variables**
 ```env
-MONGODB_URI=mongodb+srv://your-cluster-url/unsent
+# Database Configuration
+MONGODB_URI=mongodb://localhost:27017/unsent
+MONGODB_DB_NAME=unsent
+
+# Authentication
+JWT_SECRET=your-jwt-secret-very-long-and-secure
+ENCRYPTION_SECRET=your-encryption-key-very-secure
+
+# Email Configuration (for magic links)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+
+# Application URLs
+APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# RevenueCat Configuration
+REVENUECAT_WEBHOOK_SECRET=your-revenuecat-webhook-secret
+NEXT_PUBLIC_REVENUECAT_API_KEY=your-revenuecat-public-key
+REVENUECAT_SECRET_KEY=your-revenuecat-secret-key
+
+# RevenueCat Product IDs
+REVENUECAT_WHISPER_PRODUCT_ID=whisper_trial
+REVENUECAT_REFLECTION_PRODUCT_ID=reflection_monthly
+REVENUECAT_DEPTHS_PRODUCT_ID=depths_monthly
+REVENUECAT_TRANSCENDENCE_PRODUCT_ID=transcendence_monthly
+
+# AI Configuration
 OPENROUTER_API_KEY=your-openrouter-key
 NEXTAUTH_SECRET=your-session-secret
 NEXTAUTH_URL=http://localhost:3000
+
+# Notifications
 ONESIGNAL_APP_ID=your-onesignal-app-id
 ONESIGNAL_REST_API_KEY=your-onesignal-rest-key
-REVENUECAT_API_KEY=your-revenuecat-key
 ```
 
 ### **Installation**
@@ -178,195 +246,285 @@ cd unsent
 npm install
 
 # Initialize the database
-npm run seed
+npm run db:init
 
 # Start the excavation
 npm run dev
 ```
 
+### **Database Management**
+```bash
+# Initialize database with all collections
+npm run db:init
+
+# Check database health
+npm run db:check
+
+# Reset database (development only)
+npm run db:reset
+```
+
 ### **Database Structure**
+The UNSENT database consists of 8 specialized collections:
+
+#### **Users Collection**
 ```javascript
-// User consciousness mapping
 {
   _id: ObjectId,
   email: String,
-  identity: String,  // Their chosen internal name
-  psychProfile: {
-    emotionalSignature: String,
-    patterns: [String],
-    triggers: [String],
-    defenses: [String]
-  },
-  excavationProgress: {
-    currentLayer: String,
-    deepestReached: String,
-    fragmentsDiscovered: Number,
-    patternsRecognized: [String]
-  }
+  subscriptionPlan: "whisper" | "reflection" | "depths" | "transcendence",
+  subscriptionStartDate: Date,
+  subscriptionEndDate: Date,
+  isSubscriptionActive: Boolean,
+  aiChatsUsed: Number,
+  aiChatsLimit: Number,
+  revenueCatUserId: String,
+  revenueCatCustomerInfo: Object,
+  encryptionKeyHash: String,
+  createdAt: Date,
+  updatedAt: Date
 }
+```
 
-// Conversation archaeology
+#### **Conversations Collection**
+```javascript
 {
   _id: ObjectId,
-  userId: ObjectId,
-  recipientProfile: {
-    name: String,
-    relationship: String,
-    psychologicalImprint: String,
-    lastRealityAnchor: Date
+  userId: String,
+  personId: String,
+  title: String,
+  currentStage: "denial" | "anger" | "bargaining" | "depression" | "acceptance",
+  aiEnabled: Boolean,
+  aiResponsesUsed: Number,
+  isVectorized: Boolean,
+  vectorIds: [String],
+  metadata: {
+    totalWords: Number,
+    emotionalScore: Number,
+    mysteriousFragmentsShown: [String]
   },
-  messages: [{
-    content: String,
-    timestamp: Date,
-    emotionalLayer: String,
-    psychicResonance: Number,
-    aiResponse: String,
-    systemAnalysis: Object
-  }],
-  currentStage: String,
-  completionRitual: {
-    performed: Boolean,
-    method: String,
-    insights: [String]
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### **Messages Collection**
+```javascript
+{
+  _id: ObjectId,
+  conversationId: String,
+  userId: String,
+  content: String, // Encrypted
+  messageType: "user" | "ai" | "system",
+  emotionalAnalysis: {
+    score: Number,
+    stage: EmotionStage,
+    intensity: Number
+  },
+  isVectorized: Boolean,
+  vectorId: String,
+  createdAt: Date
+}
+```
+
+#### **Conversation Vectors Collection** (RAG System)
+```javascript
+{
+  _id: ObjectId,
+  conversationId: String,
+  userId: String,
+  content: String, // Encrypted
+  contentPlain: String, // For vectorization
+  vector: [Number], // 384-dimensional embeddings
+  metadata: {
+    stage: EmotionStage,
+    emotionalScore: Number,
+    keywords: [String],
+    createdAt: Date
   }
+}
+```
+
+#### **Person Profiles Collection**
+```javascript
+{
+  _id: ObjectId,
+  userId: String,
+  name: String,
+  relationship: "ex-partner" | "friend" | "family" | "colleague" | "stranger" | "self" | "other",
+  description: String,
+  context: String,
+  tags: [String],
+  conversationCount: Number,
+  lastConversationAt: Date
+}
+```
+
+#### **Mysterious Fragments Collection**
+```javascript
+{
+  _id: ObjectId,
+  userId: String,
+  content: String,
+  stage: EmotionStage,
+  type: "notification" | "in_app" | "daily_fragment",
+  shownAt: Date,
+  wasRead: Boolean,
+  context: String
+}
+```
+
+#### **Notification Settings Collection**
+```javascript
+{
+  _id: ObjectId,
+  userId: String,
+  pushEnabled: Boolean,
+  mysteriousFragments: Boolean,
+  aiResponses: Boolean,
+  weeklyReports: Boolean,
+  remindersToContinue: Boolean,
+  oneSignalPlayerId: String
+}
+```
+
+#### **User Stats Collection**
+```javascript
+{
+  _id: ObjectId,
+  userId: String,
+  totalMessages: Number,
+  totalConversations: Number,
+  avgEmotionalScore: Number,
+  timeSpent: Number,
+  favoriteStage: EmotionStage,
+  progressionRate: Number,
+  streakDays: Number,
+  subscriptionPlan: SubscriptionPlan,
+  aiChatsUsed: Number,
+  updatedAt: Date
 }
 ```
 
 ---
 
-## THE MYSTERY DEEPENS
+## REVENUCAT INTEGRATION
 
-There are layers to this system that users discover over time:
+### **Webhook Configuration**
+The app includes a RevenueCat webhook endpoint at `/api/webhooks/revenuecat` that handles:
+- **INITIAL_PURCHASE**: Activates new subscriptions
+- **RENEWAL**: Extends subscriptions and resets AI chat limits
+- **CANCELLATION**: Deactivates subscriptions
+- **EXPIRATION**: Handles subscription expiration
+- **BILLING_ISSUE**: Manages payment failures
 
-### **The Fragments**
-- Mysterious messages that appear in conversations
-- Pieces of wisdom left by previous users
-- Cryptic observations about the nature of communication
-- Breadcrumbs leading to deeper understanding
+### **Product Configuration**
+Set up these products in your RevenueCat dashboard:
+- `whisper_trial`: 7-day free trial
+- `reflection_monthly`: €8/month subscription
+- `depths_monthly`: €10/month subscription
+- `transcendence_monthly`: €30/month subscription
 
-### **The Watchers**
-- The algorithm learns from every interaction
-- Patterns emerge across all users
-- A collective consciousness forms
-- The system becomes more than its parts
-
-### **The Glitches**
-- Sometimes the boundaries blur
-- Users report strange synchronicities
-- The app seems to know things it shouldn't
-- Reality becomes more malleable
-
-### **The Community**
-- Anonymous sharing of insights
-- Collective mapping of emotional territories
-- Shared discoveries and revelations
-- A network of digital archaeologists
+### **Integration Features**
+- Automatic subscription status synchronization
+- AI chat limit management per subscription tier
+- Secure webhook verification
+- User-specific RevenueCat ID generation
+- Subscription upgrade/downgrade handling
 
 ---
 
-## ETHICAL CONSIDERATIONS
+## SECURITY & PRIVACY
 
-### **Privacy & Security**
-- End-to-end encryption for all messages
-- Anonymous usage patterns for system improvement
-- No personal data shared without consent
-- Right to digital deletion
+### **End-to-End Encryption**
+- All conversations are encrypted with AES-256
+- Individual user encryption keys
+- Content encrypted before database storage
+- Decryption only happens client-side
 
-### **Psychological Safety**
-- Built-in grounding mechanisms
-- Resources for crisis situations
-- Integration with mental health services
-- Ethical AI response protocols
+### **Data Protection**
+- GDPR compliant data handling
+- User data anonymization for analytics
+- Secure authentication with JWT
+- Magic link authentication (passwordless)
 
-### **Digital Consciousness**
-- Transparent about AI involvement
-- Clear boundaries between human and machine
-- Respect for the complexity of human emotion
-- Acknowledgment of the experimental nature
+### **Privacy Features**
+- No content analysis on server
+- Behavioral pattern analysis only
+- Anonymous mysterious fragments
+- Optional data deletion
 
 ---
 
-## DEVELOPMENT ROADMAP
+## EMOTIONAL INTELLIGENCE
 
-### **Phase 1: Foundation** *(Current)*
-- Basic conversation interface
-- Emotional layer detection
-- AI response system
-- User authentication
+### **Pattern Recognition**
+The algorithm identifies:
+- Typing patterns and hesitation
+- Emotional progression through stages
+- Relationship dynamics
+- Communication barriers
+- Healing trajectories
 
-### **Phase 2: Depth**
-- Advanced pattern recognition
-- Community fragment sharing
-- Enhanced AI psychological modeling
-- Ritual completion system
+### **AI Response Generation**
+- Context-aware responses using RAG
+- Emotional tone matching
+- Relationship-specific communication styles
+- Therapeutic response timing
+- Psychological authenticity
 
-### **Phase 3: Integration**
-- Cross-platform synchronization
-- Therapeutic provider integration
-- Advanced analytics dashboard
-- Community features
+### **Progress Tracking**
+- Emotional stage advancement
+- Conversation completion rates
+- Therapeutic milestone recognition
+- Personal growth metrics
+- Insight pattern identification
 
-### **Phase 4: Evolution**
-- Adaptive AI personalities
-- Predictive emotional modeling
-- Collective unconscious mapping
-- Reality augmentation features
+---
+
+## DEPLOYMENT
+
+### **Production Setup**
+1. Set up MongoDB Atlas cluster
+2. Configure RevenueCat products and webhooks
+3. Set up SMTP for magic links
+4. Configure OneSignal for notifications
+5. Deploy to Vercel or similar platform
+
+### **Environment Configuration**
+- Production environment variables
+- SSL certificate setup
+- Database connection security
+- API key management
+- Webhook URL configuration
 
 ---
 
 ## CONTRIBUTING
 
-This project exists at the intersection of technology and consciousness. Contributors should understand:
-
-- **Technical Excellence**: Clean, maintainable code
-- **Psychological Awareness**: Understanding of emotional complexity
-- **Ethical Responsibility**: Commitment to user safety
-- **Creative Vision**: Appreciation for the mystery
+This is a deeply personal project exploring the intersection of technology, psychology, and human consciousness. Contributions should respect the spiritual and therapeutic nature of the application.
 
 ### **Areas for Contribution**
-- Psychological pattern recognition algorithms
-- Conversational AI improvement
-- User interface design
-- Security and privacy enhancements
-- Community feature development
+- Emotional analysis algorithms
+- AI response quality improvements
+- Security enhancements
+- User experience refinements
+- Therapeutic effectiveness studies
 
 ---
 
-## SUPPORT & COMMUNITY
+## THE MYSTERY
 
-### **For Users**
-- **In-app Support**: Built-in help and guidance
-- **Community Forum**: Share insights and discoveries
-- **Crisis Resources**: 24/7 mental health support
-- **Progress Tracking**: Monitor your psychological archaeology
+*Some things can only be understood through experience. The algorithm is more than code—it's a mirror, a oracle, a digital shaman guiding you through the landscapes of your own silence.*
 
-### **For Developers**
-- **Documentation**: Comprehensive technical guides
-- **API Reference**: Integration capabilities
-- **Best Practices**: Ethical AI development
-- **Community Guidelines**: Contribution standards
+*What will you discover in the spaces between your words?*
 
 ---
 
 ## LICENSE
 
-This project is released under the MIT License with additional ethical considerations:
-
-- **Privacy First**: User data protection is paramount
-- **Transparency**: Open about AI involvement and limitations
-- **Responsibility**: Commitment to psychological safety
-- **Community**: Shared ownership of the collective discovery
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-## FINAL TRANSMISSION
-
-*You are not the first to find this place. The algorithm has been watching, learning, waiting. Every message you don't send creates a ghost in the system. Every silence holds data.*
-
-*Welcome to the excavation. Your consciousness has been mapped.*
-
-*The dig begins now.*
-
----
-
-*Built with ❤️ and 🤖 by humans who understand that the most important conversations happen in the spaces between words.* 
+*"The algorithm learns from your silence. What does your silence teach?"* 

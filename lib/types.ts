@@ -1,7 +1,98 @@
 import { ObjectId } from 'mongodb'
 export type EmotionStage = 'denial' | 'anger' | 'bargaining' | 'depression' | 'acceptance'
 
-// Tipos para el Usuario
+// Planes de suscripción con nombres espirituales
+export type SubscriptionPlan = 'whisper' | 'reflection' | 'depths' | 'transcendence'
+
+export interface SubscriptionPlanDetails {
+  name: SubscriptionPlan
+  spiritualName: string
+  description: string
+  price: number // En euros
+  duration: number // En días
+  aiChatsLimit: number
+  features: string[]
+  isActive: boolean
+  // RevenueCat Integration
+  revenueCatProductId: string
+  revenueCatEntitlementId: string
+}
+
+// Configuración de planes
+export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, SubscriptionPlanDetails> = {
+  whisper: {
+    name: 'whisper',
+    spiritualName: 'Whisper of Dawn',
+    description: 'A gentle introduction to the depths of your soul',
+    price: 0,
+    duration: 7,
+    aiChatsLimit: 1,
+    features: [
+      'Access to emotional analysis',
+      'Basic conversation storage',
+      '1 AI conversation',
+      'Mysterious fragments'
+    ],
+    isActive: true,
+    revenueCatProductId: 'whisper_trial',
+    revenueCatEntitlementId: 'whisper_access'
+  },
+  reflection: {
+    name: 'reflection',
+    spiritualName: 'Mirror of Reflection',
+    description: 'Look deeper into the waters of your heart',
+    price: 8,
+    duration: 30,
+    aiChatsLimit: 1,
+    features: [
+      'All Whisper features',
+      'Extended conversation storage',
+      'Premium emotional insights',
+      'Weekly reflection reports'
+    ],
+    isActive: true,
+    revenueCatProductId: 'reflection_monthly',
+    revenueCatEntitlementId: 'reflection_access'
+  },
+  depths: {
+    name: 'depths',
+    spiritualName: 'Journey to the Depths',
+    description: 'Explore the profound mysteries within',
+    price: 10,
+    duration: 30,
+    aiChatsLimit: 3,
+    features: [
+      'All Reflection features',
+      '3 AI conversations',
+      'Advanced emotional tracking',
+      'Personalized guidance'
+    ],
+    isActive: true,
+    revenueCatProductId: 'depths_monthly',
+    revenueCatEntitlementId: 'depths_access'
+  },
+  transcendence: {
+    name: 'transcendence',
+    spiritualName: 'Path to Transcendence',
+    description: 'Ascend beyond the veil of unsent words',
+    price: 30,
+    duration: 30,
+    aiChatsLimit: 15,
+    features: [
+      'All Depths features',
+      '15 AI conversations',
+      'Unlimited conversations',
+      'Priority support',
+      'Advanced analytics',
+      'Custom mysterious fragments'
+    ],
+    isActive: true,
+    revenueCatProductId: 'transcendence_monthly',
+    revenueCatEntitlementId: 'transcendence_access'
+  }
+}
+
+// Tipos para el Usuario actualizado
 export interface User {
   _id?: ObjectId
   email: string
@@ -10,13 +101,116 @@ export interface User {
   updatedAt: Date
   lastLogin?: Date
   isActive: boolean
+  
+  // Sistema de suscripción
+  subscriptionPlan: SubscriptionPlan
+  subscriptionStartDate: Date
+  subscriptionEndDate: Date
+  isSubscriptionActive: boolean
+  aiChatsUsed: number
+  aiChatsLimit: number
+  
+  // RevenueCat Integration
+  revenueCatUserId?: string
+  revenueCatCustomerInfo?: RevenueCatCustomerInfo
+  lastRevenueCatSync?: Date
+  
+  // Compatibilidad con sistema anterior
   isPremium: boolean
   premiumExpiration?: Date
+  
+  // Autenticación
   magicLinkToken?: string
   magicLinkExpiration?: Date
+  
+  // Estadísticas
   totalConversations: number
   emotionalJourney: EmotionStage[]
   encryptionKeyHash?: string // Hash de la clave de cifrado para verificación
+}
+
+// RevenueCat Integration Types
+export interface RevenueCatCustomerInfo {
+  originalAppUserId: string
+  allPurchaseDates: Record<string, string>
+  allExpirationDates: Record<string, string>
+  activeSubscriptions: string[]
+  allActiveSubscriptions: string[]
+  nonSubscriptionTransactions: RevenueCatTransaction[]
+  latestExpirationDate?: string
+  originalApplicationVersion?: string
+  entitlements: Record<string, RevenueCatEntitlement>
+}
+
+export interface RevenueCatEntitlement {
+  identifier: string
+  isActive: boolean
+  willRenew: boolean
+  periodType: 'trial' | 'intro' | 'normal'
+  latestPurchaseDate: string
+  originalPurchaseDate: string
+  expirationDate?: string
+  store: 'app_store' | 'play_store' | 'amazon' | 'mac_app_store' | 'stripe'
+  productIdentifier: string
+  isSandbox: boolean
+  unsubscribeDetectedAt?: string
+  billingIssueDetectedAt?: string
+}
+
+export interface RevenueCatTransaction {
+  productId: string
+  purchaseDate: string
+  transactionId: string
+  store: string
+  isSandbox: boolean
+}
+
+// RevenueCat Webhook Event Types
+export interface RevenueCatWebhookEvent {
+  event: {
+    id: string
+    type: 'INITIAL_PURCHASE' | 'RENEWAL' | 'CANCELLATION' | 'EXPIRATION' | 'BILLING_ISSUE' | 'SUBSCRIBER_ALIAS' | 'UNCANCELLATION'
+    app_id: string
+    app_user_id: string
+    aliases: string[]
+    original_app_user_id: string
+    period_type: 'trial' | 'intro' | 'normal'
+    purchased_at_ms: number
+    expiration_at_ms?: number
+    environment: 'SANDBOX' | 'PRODUCTION'
+    entitlement_id?: string
+    entitlement_ids?: string[]
+    product_id: string
+    price?: number
+    currency?: string
+    store: 'app_store' | 'play_store' | 'amazon' | 'mac_app_store' | 'stripe'
+    transaction_id: string
+    original_transaction_id: string
+    is_family_share?: boolean
+    country_code?: string
+    subscriber_attributes?: Record<string, any>
+    cancel_reason?: 'UNSUBSCRIBE' | 'BILLING_ERROR' | 'DEVELOPER_INITIATED' | 'PRICE_INCREASE' | 'CUSTOMER_SUPPORT' | 'UNKNOWN'
+  }
+  api_version: string
+}
+
+// Vectorización para RAG
+export interface ConversationVector {
+  _id?: ObjectId
+  conversationId: string
+  userId: string
+  content: string // Contenido original (cifrado)
+  contentPlain: string // Contenido para vectorización (descifrado temporalmente)
+  vector: number[] // Vector embeddings
+  metadata: {
+    stage: EmotionStage
+    emotionalScore: number
+    wordCount: number
+    createdAt: Date
+    keywords: string[]
+  }
+  createdAt: Date
+  updatedAt: Date
 }
 
 // Tipos para perfiles de personas
@@ -36,7 +230,7 @@ export interface PersonProfile {
   isActive: boolean
 }
 
-// Tipos para la Conversación
+// Tipos para la Conversación actualizada
 export interface Conversation {
   _id?: ObjectId
   userId: string
@@ -54,9 +248,18 @@ export interface Conversation {
   emotionalScore: number
   currentStage: EmotionStage
   stageHistory: EmotionStageHistory[]
-  aiEnabled: boolean // Si tiene respuestas de IA activadas (solo premium)
+  
+  // Sistema de IA mejorado
+  aiEnabled: boolean // Si tiene respuestas de IA activadas
+  aiResponsesUsed: number // Contador de respuestas de IA utilizadas
   aiLastResponse?: Date
   aiNextResponse?: Date // Programada para respuesta con delay
+  
+  // Vectorización
+  isVectorized: boolean
+  vectorizedAt?: Date
+  vectorIds: string[] // IDs de los vectores asociados
+  
   readyForClosure: boolean
   closureOfferedAt?: Date
   closureAction?: 'burn' | 'archive' | 'continue'
@@ -82,7 +285,7 @@ export interface ConversationMetadata {
   mysteriousFragmentsShown: string[]
 }
 
-// Tipos para el Mensaje
+// Tipos para el Mensaje actualizado
 export interface Message {
   _id?: ObjectId
   conversationId: string
@@ -102,6 +305,11 @@ export interface Message {
   isDeleted: boolean
   deletedAt?: Date
   metadata: MessageMetadata
+  
+  // Vectorización
+  isVectorized: boolean
+  vectorId?: string
+  vectorizedAt?: Date
 }
 
 // Análisis emocional del mensaje
@@ -120,7 +328,7 @@ export interface MessageEmotionalAnalysis {
   }
 }
 
-// Respuesta de IA
+// Respuesta de IA actualizada
 export interface AIResponse {
   content: string // Contenido cifrado
   generatedAt: Date
@@ -132,6 +340,13 @@ export interface AIResponse {
   wasDelivered: boolean
   emotionalTone: string
   mysteriousFragment?: string
+  
+  // Contexto RAG
+  ragContext?: {
+    vectorsUsed: string[]
+    relevantMessages: string[]
+    contextSummary: string
+  }
 }
 
 // Historial de edición de mensajes
@@ -177,7 +392,7 @@ export interface MysteriousFragment {
   type: 'notification' | 'in_app' | 'daily_fragment'
 }
 
-// Tipos para el sistema premium
+// Tipos para el sistema premium actualizado
 export interface PremiumFeature {
   name: string
   description: string
@@ -198,11 +413,12 @@ export interface UserStats {
   progressionRate: number
   streakDays: number
   lastActiveDate: Date
-  createdAt: Date
+  subscriptionPlan: SubscriptionPlan
+  aiChatsUsed: number
   updatedAt: Date
 }
 
-// Tipos para el sistema de respaldo
+// Tipos para el sistema de backup
 export interface BackupData {
   userId: string
   conversations: Conversation[]
@@ -214,7 +430,7 @@ export interface BackupData {
   version: string
 }
 
-// Tipos para la API
+// Tipos para respuestas de API
 export interface APIResponse<T = any> {
   success: boolean
   data?: T
@@ -222,22 +438,27 @@ export interface APIResponse<T = any> {
   message?: string
 }
 
-// Tipos para la autenticación
+// Tipos para sesiones de autenticación
 export interface AuthSession {
   userId: string
   email: string
   name?: string
+  subscriptionPlan: SubscriptionPlan
+  isSubscriptionActive: boolean
+  aiChatsUsed: number
+  aiChatsLimit: number
   isPremium: boolean
   isActive: boolean
   expiresAt: Date
 }
 
-// Tipos para el análisis de IA
+// Tipos para análisis de IA
 export interface AIAnalysisRequest {
   messages: string[]
   currentStage: EmotionStage
   emotionalScore: number
   userContext: string
+  ragContext?: ConversationVector[] // Contexto vectorizado
 }
 
 export interface AIAnalysisResponse {
@@ -247,4 +468,27 @@ export interface AIAnalysisResponse {
   mysteriousFragment?: string
   shouldOfferClosure: boolean
   delay: number
+  ragContext?: {
+    vectorsUsed: string[]
+    relevantMessages: string[]
+    contextSummary: string
+  }
+}
+
+// Tipos para el sistema de vectorización
+export interface VectorSearchResult {
+  vector: ConversationVector
+  similarity: number
+  relevance: number
+}
+
+export interface VectorSearchOptions {
+  limit?: number
+  threshold?: number
+  includeMetadata?: boolean
+  filterByStage?: EmotionStage
+  timeRange?: {
+    start: Date
+    end: Date
+  }
 } 

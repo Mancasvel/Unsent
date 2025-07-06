@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ObjectId } from 'mongodb'
 import { getCurrentUser } from '@/lib/auth'
-import { withPawsitiveDB } from '@/lib/mongodb'
+import { getUserById } from '@/lib/database'
+import { SUBSCRIPTION_PLANS } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,49 +10,57 @@ export async function GET(request: NextRequest) {
     
     if (!currentUser) {
       return NextResponse.json(
-        { error: 'No autenticado' },
+        { error: 'Not authenticated' },
         { status: 401 }
       )
     }
 
-    const result = await withPawsitiveDB(async (db) => {
-      const usersCollection = db.collection('users')
-      const userPetsCollection = db.collection('user_pets')
+    // Obtener información completa del usuario
+    const user = await getUserById(currentUser.userId)
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
 
-      // Obtener información del usuario
-      const user = await usersCollection.findOne({ _id: new ObjectId(currentUser.userId) })
-      if (!user) {
-        throw new Error('Usuario no encontrado')
-      }
+    // Obtener detalles del plan de suscripción
+    const planDetails = SUBSCRIPTION_PLANS[user.subscriptionPlan]
 
-      // Contar mascotas del usuario
-      const petCount = await userPetsCollection.countDocuments({ userId: currentUser.userId })
-
-      return { user, petCount }
-    })
+    // Verificar si la suscripción está activa
+    const isSubscriptionActive = user.isSubscriptionActive && user.subscriptionEndDate > new Date()
 
     return NextResponse.json({
       user: {
-        id: currentUser.userId,
-        name: result.user.name,
-        email: result.user.email,
-        petCount: result.petCount,
-        interestedInPaying: result.user.interestedInPaying || 0
+        id: user._id?.toString(),
+        name: user.name,
+        email: user.email,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionPlanName: planDetails.spiritualName,
+        subscriptionPlanDescription: planDetails.description,
+        subscriptionStartDate: user.subscriptionStartDate,
+        subscriptionEndDate: user.subscriptionEndDate,
+        isSubscriptionActive,
+        aiChatsUsed: user.aiChatsUsed,
+        aiChatsLimit: user.aiChatsLimit,
+        aiChatsRemaining: Math.max(0, user.aiChatsLimit - user.aiChatsUsed),
+        totalConversations: user.totalConversations,
+        emotionalJourney: user.emotionalJourney,
+        isPremium: user.isPremium, // Compatibilidad con sistema anterior
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin,
+        planFeatures: planDetails.features,
+        planPrice: planDetails.price,
+        planDuration: planDetails.duration
       }
     }, { status: 200 })
 
   } catch (error: any) {
-    console.error('Error obteniendo usuario actual:', error)
-    
-    if (error.message === 'Usuario no encontrado') {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 404 }
-      )
-    }
+    console.error('Error getting current user:', error)
     
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

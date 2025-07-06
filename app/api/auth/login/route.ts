@@ -1,100 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import { withPawsitiveDB } from '@/lib/mongodb'
-
-const JWT_SECRET = process.env.JWT_SECRET || "unsent-secret-key-2024"
+import { getUserByEmail } from '@/lib/database'
+import { generateMagicLinkToken, sendMagicLinkEmail } from '@/lib/auth'
+import { withUnsentDB } from '@/lib/mongodb'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email } = await request.json()
 
     // Validación básica
-    if (!email || !password) {
+    if (!email) {
       return NextResponse.json(
-        { error: 'Email y contraseña son requeridos' },
+        { error: 'Email is required' },
         { status: 400 }
       )
     }
 
-    const result = await withPawsitiveDB(async (db) => {
-      const usersCollection = db.collection('users')
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      )
+    }
 
-      // Buscar usuario por email
-      const user = await usersCollection.findOne({ email: email.toLowerCase() })
-      if (!user) {
-        throw new Error('Credenciales inválidas')
-      }
+    const normalizedEmail = email.toLowerCase()
 
-      // Verificar contraseña
-      const isPasswordValid = await bcrypt.compare(password, user.password)
-      if (!isPasswordValid) {
-        throw new Error('Credenciales inválidas')
-      }
+    // Buscar usuario por email
+    const user = await getUserByEmail(normalizedEmail)
+    if (!user) {
+      return NextResponse.json(
+        { error: 'No account found with this email. Please register first.' },
+        { status: 404 }
+      )
+    }
 
-      // Contar mascotas del usuario
-      const userPetsCollection = db.collection('user_pets')
-      const petCount = await userPetsCollection.countDocuments({ userId: user._id.toString() })
+    // Verificar si el usuario está activo
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: 'Your account has been deactivated. Please contact support.' },
+        { status: 403 }
+      )
+    }
 
-      // Actualizar petCount en usuario
-      await usersCollection.updateOne(
+    // Generar magic link
+    const { token, expiresAt } = generateMagicLinkToken()
+
+    // Guardar token en base de datos
+    await withUnsentDB(async (db) => {
+      await db.collection('users').updateOne(
         { _id: user._id },
-        { 
-          $set: { 
-            petCount,
-            lastLogin: new Date(),
+        {
+          $set: {
+            magicLinkToken: token,
+            magicLinkExpiration: expiresAt,
             updatedAt: new Date()
           }
         }
       )
-
-      return { user, petCount }
     })
 
-    // Crear JWT token
-    const token = jwt.sign(
-      { 
-        userId: result.user._id.toString(),
-        email: result.user.email,
-        name: result.user.name
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    )
+    // Generar URL del magic link
+    const protocol = request.headers.get('x-forwarded-proto') || 'http'
+    const host = request.headers.get('host')
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
+    const magicLinkUrl = `${baseUrl}/auth/verify?token=${token}`
 
-    const response = NextResponse.json({
-      message: 'Login exitoso',
+    // Enviar email con magic link
+    await sendMagicLinkEmail(normalizedEmail, magicLinkUrl)
+
+    return NextResponse.json({
+      message: 'Magic link sent! Please check your email to access your account.',
+      success: true,
       user: {
-        id: result.user._id.toString(),
-        name: result.user.name,
-        email: result.user.email,
-        petCount: result.petCount
+        email: user.email,
+        subscriptionPlan: user.subscriptionPlan,
+        isSubscriptionActive: user.isSubscriptionActive
       }
     }, { status: 200 })
 
-    // Establecer cookie HTTP-only para el token
-    response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
-    })
-
-    return response
-
   } catch (error: any) {
-    console.error('Error en login:', error)
-    
-    if (error.message === 'Credenciales inválidas') {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 401 }
-      )
-    }
+    console.error('Error sending magic link:', error)
     
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

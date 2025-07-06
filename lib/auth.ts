@@ -206,6 +206,10 @@ export function createUserSession(user: User): AuthSession {
     userId: user._id!.toString(),
     email: user.email,
     name: user.name,
+    subscriptionPlan: user.subscriptionPlan,
+    isSubscriptionActive: user.isSubscriptionActive,
+    aiChatsUsed: user.aiChatsUsed,
+    aiChatsLimit: user.aiChatsLimit,
     isPremium: user.isPremium,
     isActive: user.isActive,
     expiresAt
