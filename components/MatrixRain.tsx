@@ -17,7 +17,6 @@ export default function MatrixRain({ color = '#9f7aea', className = '' }: Matrix
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Set canvas size
     const resizeCanvas = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
@@ -25,23 +24,21 @@ export default function MatrixRain({ color = '#9f7aea', className = '' }: Matrix
     resizeCanvas()
     window.addEventListener('resize', resizeCanvas)
 
-    // Matrix characters
     const chars = '01'
     const fontSize = 14
-    const columns = Math.floor(canvas.width / fontSize)
-    const drops: number[] = []
+    let columns = Math.floor(canvas.width / fontSize)
+    columns = Math.floor(columns * 0.5) // Menos líneas
 
-    // Initialize drops
+    const drops: number[] = []
     for (let i = 0; i < columns; i++) {
       drops[i] = Math.random() * canvas.height
     }
 
     const draw = () => {
-      // Semi-transparent background for trail effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
+      // Fondo más difuso
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      // Matrix characters
       ctx.fillStyle = color
       ctx.font = `${fontSize}px monospace`
 
@@ -52,13 +49,12 @@ export default function MatrixRain({ color = '#9f7aea', className = '' }: Matrix
 
         ctx.fillText(text, x, y)
 
-        // Reset drop randomly
-        if (y > canvas.height && Math.random() > 0.975) {
+        if (y > canvas.height && Math.random() > 0.99) {
           drops[i] = 0
         }
 
-        // Move drop down
-        drops[i] += 0.5 + Math.random() * 0.5
+        // Movimiento más lento
+        drops[i] += 0.1 + Math.random() * 0.2
       }
     }
 
@@ -73,8 +69,8 @@ export default function MatrixRain({ color = '#9f7aea', className = '' }: Matrix
   return (
     <canvas
       ref={canvasRef}
-      className={`fixed inset-0 pointer-events-none ${className}`}
+      className={`fixed inset-0 pointer-events-none blur-sm opacity-80 ${className}`}
       style={{ zIndex: 0 }}
     />
   )
-} 
+}
