@@ -31,8 +31,8 @@ export default function ConversationsPage() {
       const mockConversations: Conversation[] = [
         {
           id: '1',
-          title: 'Carta a mi padre',
-          lastMessage: 'Nunca pude decirte lo que realmente sentía...',
+          title: 'Letter to my father',
+          lastMessage: 'I could never tell you what I really felt...',
           lastMessageAt: new Date('2024-01-15'),
           messageCount: 12,
           emotionalScore: 75,
@@ -42,8 +42,8 @@ export default function ConversationsPage() {
         },
         {
           id: '2',
-          title: 'Para mi yo del pasado',
-          lastMessage: 'Ojalá hubiera sabido entonces lo que sé ahora...',
+          title: 'To my past self',
+          lastMessage: 'I wish I had known then what I know now...',
           lastMessageAt: new Date('2024-01-10'),
           messageCount: 8,
           emotionalScore: 45,
@@ -53,8 +53,8 @@ export default function ConversationsPage() {
         },
         {
           id: '3',
-          title: 'Conversación archivada',
-          lastMessage: 'Esta conversación fue archivada',
+          title: 'Archived conversation',
+          lastMessage: 'This conversation was archived',
           lastMessageAt: new Date('2024-01-05'),
           messageCount: 15,
           emotionalScore: 90,
@@ -87,8 +87,8 @@ export default function ConversationsPage() {
       {/* Header */}
       <div className="p-6 border-b border-purple-500/30 bg-black/40 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-white mb-2">Mis Conversaciones</h1>
-          <p className="text-gray-400">Todas las conversaciones que has tenido contigo mismo</p>
+          <h1 className="text-3xl font-bold text-white mb-2">My Conversations</h1>
+          <p className="text-gray-400">All conversations you've had with yourself</p>
         </div>
       </div>
 
@@ -104,7 +104,7 @@ export default function ConversationsPage() {
                   : 'bg-black/40 text-gray-400 hover:bg-black/60'
               }`}
             >
-              Todas
+              All
             </button>
             <button
               onClick={() => setFilter('active')}
@@ -114,7 +114,7 @@ export default function ConversationsPage() {
                   : 'bg-black/40 text-gray-400 hover:bg-black/60'
               }`}
             >
-              Activas
+              Active
             </button>
             <button
               onClick={() => setFilter('archived')}
@@ -124,7 +124,7 @@ export default function ConversationsPage() {
                   : 'bg-black/40 text-gray-400 hover:bg-black/60'
               }`}
             >
-              Archivadas
+              Archived
             </button>
           </div>
 
@@ -133,7 +133,7 @@ export default function ConversationsPage() {
             href="/new-conversation"
             className="inline-block mb-6 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
           >
-            + Nueva Conversación
+            + New Conversation
           </Link>
 
           {/* Conversations List */}
@@ -161,7 +161,7 @@ export default function ConversationsPage() {
                             {conversation.lastMessage}
                           </p>
                           <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <span>{conversation.messageCount} mensajes</span>
+                            <span>{conversation.messageCount} messages</span>
                             <span>•</span>
                             <span>{conversation.lastMessageAt.toLocaleDateString()}</span>
                             <span>•</span>
@@ -200,17 +200,17 @@ export default function ConversationsPage() {
             <div className="text-center py-12">
               <p className="text-gray-400 text-lg mb-4">
                 {filter === 'all' 
-                  ? 'No tienes conversaciones aún' 
+                  ? 'You have no conversations yet' 
                   : filter === 'archived' 
-                  ? 'No tienes conversaciones archivadas'
-                  : 'No tienes conversaciones activas'
+                  ? 'You have no archived conversations'
+                  : 'You have no active conversations'
                 }
               </p>
               <Link
                 href="/new-conversation"
                 className="inline-block px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-all duration-300"
               >
-                Comenzar tu primera conversación
+                Start your first conversation
               </Link>
             </div>
           )}

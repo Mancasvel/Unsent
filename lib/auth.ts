@@ -14,36 +14,48 @@ interface JWTPayload {
   exp: number
 }
 
-// Configuración de nodemailer
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
+// SMTP Configuration with fallback for development
+const createTransporter = () => {
+  const smtpUser = process.env.SMTP_USER
+  const smtpPass = process.env.SMTP_PASS
+  
+  // Only create transporter if credentials are available
+  if (smtpUser && smtpPass) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      }
+    })
   }
-})
+  
+  return null
+}
+
+const transporter = createTransporter()
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload
     return decoded
   } catch (error) {
-    console.error('Error verificando token:', error)
+    console.error('Error verifying token:', error)
     return null
   }
 }
 
 export function getTokenFromRequest(request: NextRequest): string | null {
-  // Intentar obtener token de cookie
+  // Try to get token from cookie
   const token = request.cookies.get('auth-token')?.value
   
   if (token) {
     return token
   }
 
-  // Intentar obtener token de header Authorization
+  // Try to get token from Authorization header
   const authHeader = request.headers.get('authorization')
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7)
@@ -70,68 +82,106 @@ export function requireAuth(request: NextRequest): JWTPayload {
 }
 
 /**
- * Genera un token de enlace mágico
+ * Generate a magic link token
  */
 export function generateMagicLinkToken(): { token: string; expiresAt: Date } {
   const token = crypto.randomBytes(32).toString('hex')
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutos
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
   
   return { token, expiresAt }
 }
 
 /**
- * Envía email con enlace mágico
+ * Send magic link email
  */
 export async function sendMagicLinkEmail(email: string, magicLinkUrl: string): Promise<void> {
   try {
     const mailOptions = {
       from: process.env.SMTP_FROM || 'noreply@unsent.app',
       to: email,
-      subject: 'Tu enlace mágico para Unsent',
+      subject: 'Your magic link for Unsent',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="color: #8b5cf6; font-size: 2.5em; margin: 0; text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);">UNSENT</h1>
-            <p style="color: #a855f7; font-size: 1.2em; margin: 10px 0 0 0;">Mensajes que nunca se enviaron</p>
+            <p style="color: #a855f7; font-size: 1.2em; margin: 10px 0 0 0;">Messages that were never sent</p>
           </div>
           
           <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 20px; margin: 20px 0;">
             <p style="color: #d1d5db; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-              Hola,<br><br>
-              Has solicitado acceso a tu espacio personal en Unsent. Haz clic en el enlace de abajo para continuar:
+              Hello,<br><br>
+              You've requested access to your personal space in Unsent. Click the link below to continue:
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="${magicLinkUrl}" 
                  style="display: inline-block; padding: 15px 30px; background: linear-gradient(45deg, #8b5cf6, #ec4899); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
-                Acceder a Unsent
+                Access Unsent
               </a>
             </div>
             
             <p style="color: #9ca3af; font-size: 14px; margin: 20px 0 0 0;">
-              Este enlace expirará en 15 minutos por seguridad.
+              This link will expire in 15 minutes for security.
             </p>
           </div>
           
           <div style="border-top: 1px solid #374151; padding-top: 20px; margin-top: 30px;">
             <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-              🔒 Tus mensajes están cifrados y son completamente privados<br>
-              Si no solicitaste este enlace, puedes ignorar este email
+              🔒 Your messages are encrypted and completely private<br>
+              If you didn't request this link, you can safely ignore this email
             </p>
           </div>
         </div>
       `
     }
 
-    await transporter.sendMail(mailOptions)
+    if (transporter) {
+      await transporter.sendMail(mailOptions)
+      console.log('Magic link email sent successfully to:', email)
+    } else {
+      // Development fallback - log the magic link instead of sending email
+      console.log('┌─────────────────────────────────────────────────┐')
+      console.log('│            🚀 DEVELOPMENT MODE                  │')
+      console.log('│         Magic Link for Testing                  │')
+      console.log('├─────────────────────────────────────────────────┤')
+      console.log('│ Email:', email.padEnd(35), '│')
+      console.log('│ Magic Link URL:                                 │')
+      console.log('│', magicLinkUrl.padEnd(47), '│')
+      console.log('├─────────────────────────────────────────────────┤')
+      console.log('│ Copy the URL above and paste it in your browser│')
+      console.log('│ to complete the login process.                  │')
+      console.log('└─────────────────────────────────────────────────┘')
+      
+      // Don't throw error in development mode - just log
+      return
+    }
   } catch (error) {
-    console.error('Error enviando email:', error)
-    throw new Error('Error enviando email de verificación')
+    console.error('Error sending email:', error)
+    
+    // In development, show the magic link even if email fails
+    if (process.env.NODE_ENV === 'development') {
+      console.log('┌─────────────────────────────────────────────────┐')
+      console.log('│          ⚠️  EMAIL FAILED - DEV MODE            │')
+      console.log('│         Using Console Magic Link                │')
+      console.log('├─────────────────────────────────────────────────┤')
+      console.log('│ Email:', email.padEnd(35), '│')
+      console.log('│ Magic Link URL:                                 │')
+      console.log('│', magicLinkUrl.padEnd(47), '│')
+      console.log('├─────────────────────────────────────────────────┤')
+      console.log('│ Copy the URL above and paste it in your browser│')
+      console.log('│ Email service will be configured later.         │')
+      console.log('└─────────────────────────────────────────────────┘')
+      
+      // Don't throw error in development - let user continue with console link
+      return
+    }
+    
+    throw new Error('Error sending verification email')
   }
 }
 
 /**
- * Verifica si un token de enlace mágico es válido
+ * Verify if a magic link token is valid
  */
 export function verifyMagicLinkToken(token: string, storedToken: string, expiresAt: Date): boolean {
   if (!token || !storedToken) return false
@@ -140,17 +190,17 @@ export function verifyMagicLinkToken(token: string, storedToken: string, expires
 }
 
 /**
- * Genera un token de sesión
+ * Generate a session token
  */
 export function generateSessionToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
 /**
- * Crea una sesión de usuario
+ * Create a user session
  */
 export function createUserSession(user: User): AuthSession {
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 días
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
   
   return {
     userId: user._id!.toString(),
@@ -163,7 +213,7 @@ export function createUserSession(user: User): AuthSession {
 }
 
 /**
- * Valida una sesión de usuario
+ * Validate a user session
  */
 export function validateSession(session: AuthSession): boolean {
   if (!session) return false
@@ -174,14 +224,14 @@ export function validateSession(session: AuthSession): boolean {
 }
 
 /**
- * Genera un hash seguro para almacenar tokens
+ * Generate a secure hash for storing tokens
  */
 export function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex')
 }
 
 /**
- * Verifica si un hash coincide con un token
+ * Verify if a hash matches a token
  */
 export function verifyTokenHash(token: string, hash: string): boolean {
   const tokenHash = hashToken(token)
@@ -189,21 +239,21 @@ export function verifyTokenHash(token: string, hash: string): boolean {
 }
 
 /**
- * Genera un identificador único para dispositivos
+ * Generate a unique device identifier
  */
 export function generateDeviceId(): string {
   return crypto.randomUUID()
 }
 
 /**
- * Calcula el tiempo restante para expiración
+ * Calculate time remaining until expiration
  */
 export function getTimeUntilExpiration(expiresAt: Date): number {
   return Math.max(0, expiresAt.getTime() - Date.now())
 }
 
 /**
- * Formatea tiempo restante en texto legible
+ * Format remaining time in readable text
  */
 export function formatTimeRemaining(milliseconds: number): string {
   const minutes = Math.floor(milliseconds / (1000 * 60))
@@ -216,7 +266,7 @@ export function formatTimeRemaining(milliseconds: number): string {
 }
 
 /**
- * Limpia tokens expirados de la base de datos
+ * Clean up expired tokens from database
  */
 export async function cleanupExpiredTokens(db: any): Promise<void> {
   try {

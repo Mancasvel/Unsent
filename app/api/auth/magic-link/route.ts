@@ -7,19 +7,19 @@ export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json()
 
-    // Validación básica
+    // Basic validation
     if (!email) {
       return NextResponse.json(
-        { error: 'Email es requerido' },
+        { error: 'Email is required' },
         { status: 400 }
       )
     }
 
-    // Validar formato de email
+    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: 'Email inválido' },
+        { error: 'Invalid email' },
         { status: 400 }
       )
     }
@@ -27,14 +27,14 @@ export async function POST(request: NextRequest) {
     const result = await withUnsentDB(async (db) => {
       const usersCollection = db.collection('users')
       
-      // Buscar o crear usuario
+      // Find or create user
       let user = await usersCollection.findOne({ email: email.toLowerCase() })
       
       if (!user) {
-        // Crear nuevo usuario
+        // Create new user
         const newUser: User = {
           email: email.toLowerCase(),
-          name: email.split('@')[0], // Nombre temporal basado en email
+          name: email.split('@')[0], // Temporary name based on email
           createdAt: new Date(),
           updatedAt: new Date(),
           isActive: true,
@@ -47,10 +47,10 @@ export async function POST(request: NextRequest) {
         user = { ...newUser, _id: insertResult.insertedId }
       }
 
-      // Generar token de enlace mágico
+      // Generate magic link token
       const { token, expiresAt } = generateMagicLinkToken()
       
-      // Actualizar usuario con token
+      // Update user with token
       await usersCollection.updateOne(
         { _id: user._id },
         {
@@ -65,18 +65,23 @@ export async function POST(request: NextRequest) {
       return { user, token }
     })
 
-    // Enviar email con enlace mágico
-    const magicLinkUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${result.token}`
+    // Generate the correct base URL
+    const protocol = request.headers.get('x-forwarded-proto') || 'http'
+    const host = request.headers.get('host') || 'localhost:3001'
+    const baseUrl = process.env.APP_URL || `${protocol}://${host}`
+    
+    // Send email with magic link
+    const magicLinkUrl = `${baseUrl}/auth/verify?token=${result.token}`
     
     await sendMagicLinkEmail(email, magicLinkUrl)
 
     return NextResponse.json({
-      message: 'Enlace mágico enviado correctamente',
+      message: 'Magic link sent successfully',
       success: true
     }, { status: 200 })
 
   } catch (error: any) {
-    console.error('Error en magic link:', error)
+    console.error('Error in magic link:', error)
     
     if (error.message.includes('Email')) {
       return NextResponse.json(
@@ -86,7 +91,7 @@ export async function POST(request: NextRequest) {
     }
     
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

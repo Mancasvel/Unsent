@@ -77,7 +77,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+    <div className="min-h-screen bg-black text-white overflow-hidden">
       {/* Matrix Rain Background */}
       <MatrixRain color="#9f7aea" />
 
@@ -156,14 +156,6 @@ export default function HomePage() {
                     </motion.button>
                   </Link>
                   
-                  <Link href="/demo-conversation">
-                    <motion.button
-                      className="px-8 py-3 bg-transparent border border-gray-600 text-gray-400 font-mono text-sm hover:border-gray-400 hover:text-white transition-all duration-500 rounded-lg"
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      [DEMO MODE]
-                    </motion.button>
-                  </Link>
                 </div>
               </div>
             ) : (
@@ -216,7 +208,7 @@ export default function HomePage() {
                 <div className="text-white">REALITY ENGINE: <span className="text-green-400">Next.js 14</span></div>
                 <div className="text-white">CONSCIOUSNESS LAYER: <span className="text-cyan-400">React 18</span></div>
                 <div className="text-white">MEMORY SUBSTRATE: <span className="text-blue-400">MongoDB Atlas</span></div>
-                <div className="text-white">AI ORACLE: <span className="text-purple-400">Claude 3.5</span></div>
+                <div className="text-white">AI ORACLE: <span className="text-purple-400">Claude Sonnet 4</span></div>
               </div>
               <div className="space-y-2">
                 <div className="text-white">ENCRYPTION: <span className="text-yellow-400">AES-256</span></div>
@@ -240,43 +232,8 @@ export default function HomePage() {
           </motion.div>
 
           {/* Terminal access */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 6, duration: 1 }}
-            className="text-center"
-          >
-            <button
-              onClick={() => setShowTerminal(!showTerminal)}
-              className="text-gray-600 hover:text-gray-400 text-xs font-mono transition-all duration-300"
-            >
-              [ADVANCED TERMINAL ACCESS]
-            </button>
-          </motion.div>
+          
 
-          {/* Hidden terminal */}
-          <AnimatePresence>
-            {showTerminal && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="border border-green-400 bg-black p-4 font-mono text-xs text-left"
-              >
-                <div className="text-green-400 mb-2">unsent@consciousness:~$ status</div>
-                <div className="text-gray-300 space-y-1">
-                  <div>SYSTEM STATUS: OPERATIONAL</div>
-                  <div>ACTIVE CONNECTIONS: {Math.floor(Math.random() * 1000) + 100}</div>
-                  <div>CONSCIOUSNESS MAPPED: {Math.floor(Math.random() * 10000) + 5000}</div>
-                  <div>FRAGMENTS DISCOVERED: {Math.floor(Math.random() * 50000) + 25000}</div>
-                  <div>REALITY ANCHORS: STABLE</div>
-                </div>
-                <div className="text-green-400 mt-4">unsent@consciousness:~$ echo "Welcome to the excavation"</div>
-                <div className="text-gray-300">Welcome to the excavation</div>
-                <div className="text-green-400">unsent@consciousness:~$ _</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
     </div>

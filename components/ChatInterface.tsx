@@ -142,14 +142,14 @@ export default function ChatInterface({
           <div>
             <h2 className="text-xl font-semibold text-white">{conversationTitle}</h2>
             <p className="text-sm text-gray-400">
-              {messages.length} mensajes • Etapa: {currentStage}
+              {messages.length} messages • Stage: {currentStage}
             </p>
           </div>
           <button
             onClick={() => setShowAnalysis(!showAnalysis)}
             className="px-3 py-1 bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 rounded-md text-sm transition-colors"
           >
-            {showAnalysis ? 'Ocultar' : 'Análisis'}
+            {showAnalysis ? 'Hide' : 'Analysis'}
           </button>
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function ChatInterface({
           >
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-300 mb-2">Puntuación Emocional</h3>
+                <h3 className="text-sm font-medium text-gray-300 mb-2">Emotional Score</h3>
                 <div className="w-full bg-gray-700 rounded-full h-2">
                   <div 
                     className="h-2 rounded-full transition-all duration-500"
@@ -178,7 +178,7 @@ export default function ChatInterface({
                 <p className="text-xs text-gray-400 mt-1">{overallScore}/100</p>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-300 mb-2">Etapa Actual</h3>
+                <h3 className="text-sm font-medium text-gray-300 mb-2">Current Stage</h3>
                 <p 
                   className="text-lg font-semibold"
                   style={{ color: stageColor }}
@@ -225,11 +225,11 @@ export default function ChatInterface({
         {messages.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-lg mb-4">
-              ¿Qué necesitas decir?
+              What do you need to say?
             </div>
             <p className="text-gray-500 text-sm max-w-md mx-auto">
-              Este es tu espacio seguro. Escribe lo que sientes, lo que pensás, 
-              lo que nunca pudiste decir. Nadie más lo va a leer.
+              This is your safe space. Write what you feel, what you think, 
+              what you never could say. No one else will read it.
             </p>
           </div>
         )}
@@ -246,13 +246,13 @@ export default function ChatInterface({
               value={currentMessage}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              placeholder="Escribe tu mensaje..."
+              placeholder="Write your message..."
               className="w-full px-4 py-3 bg-black/60 border border-purple-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/25 transition-all duration-300 resize-none min-h-[50px] max-h-[200px]"
               rows={1}
             />
             {isTyping && (
               <div className="absolute bottom-2 right-2 text-xs text-gray-400">
-                Escribiendo...
+                Typing...
               </div>
             )}
           </div>
@@ -261,13 +261,13 @@ export default function ChatInterface({
             disabled={!currentMessage.trim()}
             className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-medium rounded-lg transition-all duration-300 disabled:opacity-50"
           >
-            Enviar
+            Send
           </button>
         </div>
         
         {!isPremium && (
           <div className="mt-2 text-xs text-gray-400 text-center">
-            <span className="text-yellow-400">Premium:</span> Activa las respuestas de IA para una experiencia más profunda
+            <span className="text-yellow-400">Premium:</span> Activate AI responses for a deeper experience
           </div>
         )}
       </div>

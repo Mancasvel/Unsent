@@ -67,9 +67,9 @@ export function RestaurantCard({ restaurant, onAddToCart }: RestaurantCardProps)
           </div>
         </div>
 
-        {/* Platos disponibles */}
+        {/* Dishes available */}
         <div className="p-4">
-          <h4 className="font-semibold text-gray-800 mb-3">Platos disponibles</h4>
+          <h4 className="font-semibold text-gray-800 mb-3">Available Dishes</h4>
           <div className="space-y-3">
             {restaurant.dishes?.slice(0, 4).map((dish) => (
               <div key={dish._id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">

@@ -14,7 +14,7 @@ export default function LoginPage() {
   const { sendMagicLink, isAuthenticated } = useAuth()
   const router = useRouter()
 
-  // Redireccionar si ya está autenticado
+  // Redirect if already authenticated
   if (isAuthenticated) {
     router.push('/')
     return null
@@ -30,15 +30,15 @@ export default function LoginPage() {
       const success = await sendMagicLink(email)
       
       if (success) {
-        setMessage('¡Enlace mágico enviado! Revisa tu email.')
+        setMessage('Magic link sent! Check your email.')
         setMessageType('success')
         setEmail('')
       } else {
-        setMessage('Error al enviar el enlace. Intenta de nuevo.')
+        setMessage('Error sending the link. Please try again.')
         setMessageType('error')
       }
     } catch (error) {
-      setMessage('Error de conexión. Intenta de nuevo.')
+      setMessage('Connection error. Please try again.')
       setMessageType('error')
     } finally {
       setLoading(false)
@@ -47,11 +47,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-purple-900/20 to-black relative overflow-hidden">
-      {/* Efectos de fondo */}
+      {/* Background effects */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent"></div>
       <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(139,92,246,0.1)_50%,transparent_75%)] bg-[length:20px_20px] animate-pulse"></div>
       
-      {/* Luces de neón flotantes */}
+      {/* Floating neon lights */}
       <div className="absolute top-20 left-20 w-2 h-2 bg-cyan-400 rounded-full blur-sm animate-pulse"></div>
       <div className="absolute top-40 right-32 w-1 h-1 bg-pink-400 rounded-full blur-sm animate-pulse delay-1000"></div>
       <div className="absolute bottom-32 left-16 w-3 h-3 bg-purple-400 rounded-full blur-sm animate-pulse delay-2000"></div>
@@ -80,11 +80,11 @@ export default function LoginPage() {
               </motion.h1>
             </Link>
             <p className="text-gray-300 text-lg">
-              Ingresa tu email para comenzar
+              Enter your email to begin
             </p>
           </div>
 
-          {/* Formulario */}
+          {/* Form */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -102,7 +102,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="tu@email.com"
+                  placeholder="your@email.com"
                   className="w-full px-4 py-3 bg-black/60 border border-purple-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/25 transition-all duration-300"
                 />
               </div>
@@ -118,15 +118,15 @@ export default function LoginPage() {
                 {loading ? (
                   <div className="flex items-center justify-center">
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Enviando...
+                    Sending...
                   </div>
                 ) : (
-                  'Enviar enlace mágico'
+                  'Send magic link'
                 )}
               </button>
             </form>
 
-            {/* Mensaje de estado */}
+            {/* Status message */}
             {message && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -142,16 +142,16 @@ export default function LoginPage() {
               </motion.div>
             )}
 
-            {/* Información adicional */}
+            {/* Additional information */}
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-400 leading-relaxed">
-                Te enviaremos un enlace mágico a tu email.<br />
-                No necesitas contraseña, solo haz clic en el enlace.
+                We'll send you a magic link to your email.<br />
+                No password needed, just click the link.
               </p>
             </div>
           </motion.div>
 
-          {/* Información sobre cifrado */}
+          {/* Encryption information */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -159,15 +159,15 @@ export default function LoginPage() {
             className="mt-8 text-center"
           >
             <div className="bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg p-4">
-              <h3 className="text-yellow-300 font-semibold mb-2">🔒 Privacidad Total</h3>
+              <h3 className="text-yellow-300 font-semibold mb-2">🔒 Total Privacy</h3>
               <p className="text-xs text-gray-400 leading-relaxed">
-                Todos tus mensajes se cifran localmente con una clave única. 
-                Nadie más puede leer lo que escribes, ni siquiera nosotros.
+                All your messages are encrypted locally with a unique key. 
+                No one else can read what you write, not even us.
               </p>
             </div>
           </motion.div>
 
-          {/* Fragmento misterioso */}
+          {/* Mysterious fragment */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -175,7 +175,7 @@ export default function LoginPage() {
             className="mt-8 p-4 border border-purple-500/20 bg-black/20 backdrop-blur-sm rounded-lg text-center"
           >
             <p className="text-purple-300 italic text-sm">
-              "Cada mensaje no enviado es una conversación pendiente contigo mismo..."
+              "Every unsent message is a pending conversation with yourself..."
             </p>
           </motion.div>
         </motion.div>
