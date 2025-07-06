@@ -71,6 +71,16 @@ export function NavbarComponent({ onNewConversation }: NavbarComponentProps) {
         {/* Contenido central - navegación */}
         <NavbarContent className="hidden lg:flex gap-1" justify="center">
           <NavbarItem>
+            <Link href="/chats">
+              <Button
+                variant="ghost"
+                className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium"
+              >
+                Chats
+              </Button>
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
             <Link href="/conversations">
               <Button
                 variant="ghost"
@@ -135,7 +145,7 @@ export function NavbarComponent({ onNewConversation }: NavbarComponentProps) {
                     <Button variant="light" className="p-1 min-w-0 h-auto">
                       <Avatar
                         size="sm"
-                        name={getUserInitials(user.name)}
+                        name={getUserInitials(user.name || user.email || 'Usuario')}
                         classNames={{
                           base: "bg-slate-100 text-slate-700",
                           name: "font-medium text-sm"
@@ -240,8 +250,7 @@ export function NavbarComponent({ onNewConversation }: NavbarComponentProps) {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        mode={authModalMode}
-        onSwitchMode={(mode) => setAuthModalMode(mode)}
+        defaultMode={authModalMode}
       />
     </>
   )

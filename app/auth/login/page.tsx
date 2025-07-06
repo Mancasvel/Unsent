@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('')
-  const { login, isAuthenticated } = useAuth()
+  const { sendMagicLink, isAuthenticated } = useAuth()
   const router = useRouter()
 
   // Redireccionar si ya está autenticado
@@ -27,14 +27,14 @@ export default function LoginPage() {
     setMessageType('')
 
     try {
-      const result = await login(email)
+      const success = await sendMagicLink(email)
       
-      if (result.success) {
-        setMessage(result.message)
+      if (success) {
+        setMessage('¡Enlace mágico enviado! Revisa tu email.')
         setMessageType('success')
         setEmail('')
       } else {
-        setMessage(result.message)
+        setMessage('Error al enviar el enlace. Intenta de nuevo.')
         setMessageType('error')
       }
     } catch (error) {

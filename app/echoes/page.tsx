@@ -29,7 +29,7 @@ export default function EchoesPage() {
         {
           id: '1',
           content: 'En la oscuridad más profunda, la luz es más preciada...',
-          stage: EmotionStage.DEPRESSION,
+          stage: 'depression',
           shownAt: new Date('2024-01-15T22:30:00'),
           wasRead: true,
           type: 'notification'
@@ -37,7 +37,7 @@ export default function EchoesPage() {
         {
           id: '2',
           content: 'El fuego que quema por dentro busca salida...',
-          stage: EmotionStage.ANGER,
+          stage: 'anger',
           shownAt: new Date('2024-01-14T15:45:00'),
           wasRead: false,
           type: 'daily'
@@ -45,7 +45,7 @@ export default function EchoesPage() {
         {
           id: '3',
           content: 'Algunos caminos se cierran para que otros se abran...',
-          stage: EmotionStage.BARGAINING,
+          stage: 'bargaining',
           shownAt: new Date('2024-01-13T18:20:00'),
           wasRead: true,
           type: 'milestone'
@@ -53,7 +53,7 @@ export default function EchoesPage() {
         {
           id: '4',
           content: 'A veces la verdad duele más que la mentira...',
-          stage: EmotionStage.DENIAL,
+          stage: 'denial',
           shownAt: new Date('2024-01-12T09:15:00'),
           wasRead: false,
           type: 'notification'
@@ -61,7 +61,7 @@ export default function EchoesPage() {
         {
           id: '5',
           content: 'La paz llega cuando dejamos de luchar contra lo inevitable...',
-          stage: EmotionStage.ACCEPTANCE,
+          stage: 'acceptance',
           shownAt: new Date('2024-01-11T21:10:00'),
           wasRead: true,
           type: 'daily'
@@ -85,7 +85,7 @@ export default function EchoesPage() {
   }
 
   const generateNewEcho = () => {
-    const stages = Object.values(EmotionStage)
+    const stages: EmotionStage[] = ['denial', 'anger', 'bargaining', 'depression', 'acceptance']
     const randomStage = stages[Math.floor(Math.random() * stages.length)]
     const fragment = getRandomFragment(randomStage)
     
@@ -136,8 +136,8 @@ export default function EchoesPage() {
             >
               Todos
             </button>
-            {Object.values(EmotionStage).map(stage => {
-              const stageColors = getStageColors(stage)
+            {(['denial', 'anger', 'bargaining', 'depression', 'acceptance'] as EmotionStage[]).map(stage => {
+              const stageColor = getStageColors(stage)
               return (
                 <button
                   key={stage}
@@ -148,7 +148,7 @@ export default function EchoesPage() {
                       : 'bg-black/40 text-gray-400 hover:bg-black/60'
                   }`}
                   style={{
-                    backgroundColor: filter === stage ? stageColors.color : undefined
+                    backgroundColor: filter === stage ? stageColor : undefined
                   }}
                 >
                   {stage}
@@ -169,7 +169,7 @@ export default function EchoesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence>
               {filteredEchoes.map((echo) => {
-                const stageColors = getStageColors(echo.stage)
+                const stageColor = getStageColors(echo.stage)
                 const typeIcons = {
                   notification: '🔔',
                   daily: '🌙',
@@ -189,7 +189,7 @@ export default function EchoesPage() {
                         : 'bg-black/40 border-purple-500/50 hover:border-purple-500/70 shadow-lg'
                     }`}
                     style={{
-                      boxShadow: echo.wasRead ? undefined : `0 0 20px ${stageColors.color}20`
+                      boxShadow: echo.wasRead ? undefined : `0 0 20px ${stageColor}20`
                     }}
                     onClick={() => {
                       setSelectedEcho(echo)
@@ -202,7 +202,7 @@ export default function EchoesPage() {
                     {!echo.wasRead && (
                       <div 
                         className="absolute -top-2 -right-2 w-4 h-4 rounded-full"
-                        style={{ backgroundColor: stageColors.color }}
+                        style={{ backgroundColor: stageColor }}
                       />
                     )}
 
@@ -211,7 +211,7 @@ export default function EchoesPage() {
                       <span className="text-2xl">{typeIcons[echo.type]}</span>
                       <span 
                         className="text-xs px-2 py-1 rounded-full bg-white/10"
-                        style={{ color: stageColors.color }}
+                        style={{ color: stageColor }}
                       >
                         {echo.stage}
                       </span>
@@ -273,7 +273,7 @@ export default function EchoesPage() {
               <div className="text-center">
                 <div 
                   className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center text-2xl"
-                  style={{ backgroundColor: getStageColors(selectedEcho.stage).color + '20' }}
+                  style={{ backgroundColor: getStageColors(selectedEcho.stage) + '20' }}
                 >
                   {selectedEcho.type === 'notification' && '🔔'}
                   {selectedEcho.type === 'daily' && '🌙'}

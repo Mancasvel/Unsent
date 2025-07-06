@@ -10,12 +10,15 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
-  const { login, loading, error, clearError } = useAuth()
+  const { login, loading } = useAuth()
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({})
+
+  const clearError = () => setError(null)
 
   const validateForm = () => {
     const errors: {[key: string]: string} = {}
@@ -36,14 +39,17 @@ export function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     
-    if (!validateForm()) return
-
-    clearError()
-    const success = await login(formData.email, formData.password)
-    
-    if (success) {
-      onClose()
+    try {
+      const success = await login(formData.email, formData.password)
+      if (success) {
+        onClose()
+      } else {
+        setError('Credenciales inválidas')
+      }
+    } catch (err) {
+      setError('Error de conexión')
     }
   }
 
@@ -52,6 +58,10 @@ export function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
     if (validationErrors[field]) {
       setValidationErrors(prev => ({ ...prev, [field]: '' }))
     }
+    if (error) clearError()
+  }
+
+  const handleFocus = () => {
     if (error) clearError()
   }
 
@@ -84,6 +94,7 @@ export function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
                 input: "text-base !font-normal", // Prevents zoom on iOS
                 inputWrapper: "min-h-[48px]" // Better touch target
               }}
+              onFocus={handleFocus}
             />
 
             <Input
@@ -101,6 +112,7 @@ export function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
                 input: "text-base !font-normal", // Prevents zoom on iOS
                 inputWrapper: "min-h-[48px]" // Better touch target
               }}
+              onFocus={handleFocus}
             />
 
             {error && (

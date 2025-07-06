@@ -153,4 +153,20 @@ export const getStageProgress = (score: number, stage: EmotionStage): number => 
   
   const [min, max] = stageConfig.range
   return Math.min(100, Math.max(0, ((score - min) / (max - min)) * 100))
+}
+
+// Additional functions that were being imported
+export const getStageColors = getStageColor // Alias for backward compatibility
+
+export const getRandomFragment = (stage?: EmotionStage): string => {
+  if (stage) {
+    const stageConfig = emotionStages.find(s => s.id === stage)
+    if (stageConfig && stageConfig.fragments.length > 0) {
+      return stageConfig.fragments[Math.floor(Math.random() * stageConfig.fragments.length)]
+    }
+  }
+  
+  // Return random fragment from all stages
+  const allFragments = emotionStages.flatMap(s => s.fragments)
+  return allFragments[Math.floor(Math.random() * allFragments.length)]
 } 

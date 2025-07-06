@@ -214,7 +214,7 @@ async function seedDatabase() {
     console.log(`🌙 Inserted ${fragmentsResult.insertedCount} emotional fragments`)
     
     // Show statistics
-    const stageStats = {}
+    const stageStats: Record<string, number> = {}
     sampleConversationStarters.forEach(starter => {
       stageStats[starter.stage] = (stageStats[starter.stage] || 0) + 1
     })

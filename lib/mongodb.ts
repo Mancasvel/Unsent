@@ -5,7 +5,7 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined
 }
 
-const uri = process.env.MONGODB_URI 
+const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/unsent' 
 
 const options: MongoClientOptions = {
   tlsAllowInvalidCertificates: true,
@@ -91,4 +91,7 @@ export async function withUnsentDB<T>(
   throw lastError!
 }
 
-export default clientPromise 
+export default clientPromise
+
+// Alias for backward compatibility
+export const withPawsitiveDB = withUnsentDB 

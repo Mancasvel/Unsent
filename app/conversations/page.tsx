@@ -36,7 +36,7 @@ export default function ConversationsPage() {
           lastMessageAt: new Date('2024-01-15'),
           messageCount: 12,
           emotionalScore: 75,
-          currentStage: EmotionStage.ACCEPTANCE,
+          currentStage: 'acceptance',
           isBurned: false,
           isArchived: false
         },
@@ -47,7 +47,7 @@ export default function ConversationsPage() {
           lastMessageAt: new Date('2024-01-10'),
           messageCount: 8,
           emotionalScore: 45,
-          currentStage: EmotionStage.BARGAINING,
+          currentStage: 'bargaining',
           isBurned: false,
           isArchived: false
         },
@@ -58,7 +58,7 @@ export default function ConversationsPage() {
           lastMessageAt: new Date('2024-01-05'),
           messageCount: 15,
           emotionalScore: 90,
-          currentStage: EmotionStage.ACCEPTANCE,
+          currentStage: 'acceptance',
           isBurned: false,
           isArchived: true
         }
@@ -140,7 +140,7 @@ export default function ConversationsPage() {
           <div className="space-y-4">
             <AnimatePresence>
               {filteredConversations.map((conversation) => {
-                const stageColors = getStageColors(conversation.currentStage)
+                const stageColor = getStageColors(conversation.currentStage)
                 
                 return (
                   <motion.div
@@ -167,7 +167,7 @@ export default function ConversationsPage() {
                             <span>•</span>
                             <span 
                               className="font-medium"
-                              style={{ color: stageColors.color }}
+                              style={{ color: stageColor }}
                             >
                               {conversation.currentStage}
                             </span>
@@ -180,7 +180,7 @@ export default function ConversationsPage() {
                               className="h-2 rounded-full transition-all duration-500"
                               style={{ 
                                 width: `${conversation.emotionalScore}%`,
-                                backgroundColor: stageColors.color
+                                backgroundColor: stageColor
                               }}
                             />
                           </div>

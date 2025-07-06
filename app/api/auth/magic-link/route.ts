@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await withUnsentDB(async (db) => {
-      const usersCollection = db.collection<User>('users')
+      const usersCollection = db.collection('users')
       
       // Buscar o crear usuario
       let user = await usersCollection.findOne({ email: email.toLowerCase() })

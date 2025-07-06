@@ -10,7 +10,8 @@ interface RegisterFormProps {
 }
 
 export function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormProps) {
-  const { register, loading, error, clearError } = useAuth()
+  const { register, loading } = useAuth()
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,6 +19,8 @@ export function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormProps) {
     confirmPassword: ''
   })
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({})
+
+  const clearError = () => setError(null)
 
   const validateForm = () => {
     const errors: {[key: string]: string} = {}
@@ -52,14 +55,19 @@ export function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     
     if (!validateForm()) return
 
-    clearError()
-    const success = await register(formData.name, formData.email, formData.password)
-    
-    if (success) {
-      onClose()
+    try {
+      const success = await register(formData.email, formData.password, formData.name)
+      if (success) {
+        onClose()
+      } else {
+        setError('Error al crear la cuenta')
+      }
+    } catch (err) {
+      setError('Error de conexión')
     }
   }
 
@@ -68,6 +76,10 @@ export function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormProps) {
     if (validationErrors[field]) {
       setValidationErrors(prev => ({ ...prev, [field]: '' }))
     }
+    if (error) clearError()
+  }
+
+  const handleFocus = () => {
     if (error) clearError()
   }
 

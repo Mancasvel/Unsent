@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { PersonProfile } from '@/lib/types'
+import type { PersonProfile } from '@/lib/types'
 
 interface PersonProfileProps {
   profile?: PersonProfile

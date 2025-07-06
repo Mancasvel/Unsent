@@ -150,21 +150,46 @@ export function useConversation(conversationId?: string) {
   const loadConversations = async () => {
     try {
       setIsLoading(true)
-      const saved = localStorage.getItem('unsent_conversations')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        const decryptedConversations = parsed.map((conv: any) => ({
-          ...conv,
-          messages: conv.messages.map((msg: any) => ({
-            ...msg,
-            content: msg.encryptedContent ? 
-              decryptMessage(msg.encryptedContent, sessionKey) : 
-              msg.content,
-            timestamp: new Date(msg.timestamp)
-          })),
-          lastActive: new Date(conv.lastActive)
+      
+      // Try to load from API first
+      const response = await fetch('/api/conversations', {
+        headers: {
+          'x-user-id': 'demo-user' // In production, use proper auth
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const conversations = data.conversations.map((conv: any) => ({
+          id: conv.id,
+          title: conv.title,
+          messages: [], // Messages will be loaded when conversation is opened
+          recipientProfile: conv.recipientProfile,
+          currentStage: conv.currentStage,
+          lastActive: new Date(conv.lastActive),
+          isCompleted: conv.isCompleted,
+          digitalExhaust: conv.digitalExhaust,
+          behavioralProfile: conv.behavioralProfile
         }))
-        setConversations(decryptedConversations)
+        setConversations(conversations)
+      } else {
+        // Fallback to localStorage for backward compatibility
+        const saved = localStorage.getItem('unsent_conversations')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          const decryptedConversations = parsed.map((conv: any) => ({
+            ...conv,
+            messages: conv.messages.map((msg: any) => ({
+              ...msg,
+              content: msg.encryptedContent ? 
+                decryptMessage(msg.encryptedContent, sessionKey) : 
+                msg.content,
+              timestamp: new Date(msg.timestamp)
+            })),
+            lastActive: new Date(conv.lastActive)
+          }))
+          setConversations(decryptedConversations)
+        }
       }
     } catch (error) {
       console.error('Error loading conversations:', error)
@@ -174,9 +199,13 @@ export function useConversation(conversationId?: string) {
     }
   }
 
-  const saveConversations = (convs: Conversation[]) => {
+  const saveConversations = async (convs: Conversation[]) => {
     try {
-      // Encrypt messages before saving
+      // For now, just update local state
+      // Individual messages are saved via API in sendMessage
+      setConversations(convs)
+      
+      // Fallback to localStorage for backward compatibility
       const encryptedConversations = convs.map(conv => ({
         ...conv,
         messages: conv.messages.map(msg => ({
@@ -189,35 +218,82 @@ export function useConversation(conversationId?: string) {
       }))
       
       localStorage.setItem('unsent_conversations', JSON.stringify(encryptedConversations))
-      setConversations(convs)
     } catch (error) {
       console.error('Error saving conversations:', error)
       setError('Failed to save conversation')
     }
   }
 
-  const createConversation = (title: string, recipientProfile?: PersonProfile): string => {
-    const newConversation: Conversation = {
-      id: `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      title,
-      messages: [],
-      recipientProfile,
-      currentStage: 'static', // Starting stage in ARG terminology
-      lastActive: new Date(),
-      isCompleted: false
+  const createConversation = async (title: string, recipientProfile?: PersonProfile): Promise<string> => {
+    try {
+      // Create conversation via API
+      const response = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': 'demo-user'
+        },
+        body: JSON.stringify({
+          title,
+          recipientProfile
+        })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const conversationId = data.id
+        
+        // Create local conversation object
+        const newConversation: Conversation = {
+          id: conversationId,
+          title,
+          messages: [],
+          recipientProfile,
+          currentStage: 'static',
+          lastActive: new Date(),
+          isCompleted: false
+        }
+        
+        // Add to local state
+        setConversations(prev => [...prev, newConversation])
+        setCurrentConversation(newConversation)
+        
+        trackInteraction('conversation_created', {
+          conversationId,
+          title,
+          hasRecipient: !!recipientProfile
+        })
+        
+        return conversationId
+      } else {
+        throw new Error('Failed to create conversation')
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error)
+      setError('Failed to create conversation')
+      
+      // Fallback to local creation
+      const newConversation: Conversation = {
+        id: `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        title,
+        messages: [],
+        recipientProfile,
+        currentStage: 'static',
+        lastActive: new Date(),
+        isCompleted: false
+      }
+      
+      setConversations(prev => [...prev, newConversation])
+      setCurrentConversation(newConversation)
+      
+      trackInteraction('conversation_created', {
+        conversationId: newConversation.id,
+        title,
+        hasRecipient: !!recipientProfile
+      })
+      
+      return newConversation.id
     }
-
-    const updatedConversations = [...conversations, newConversation]
-    saveConversations(updatedConversations)
-    setCurrentConversation(newConversation)
-    
-    trackInteraction('conversation_created', {
-      title,
-      hasRecipient: !!recipientProfile,
-      recipientType: recipientProfile?.relationship
-    })
-
-    return newConversation.id
   }
 
   const sendMessage = async (content: string): Promise<void> => {
@@ -388,12 +464,12 @@ export function useConversation(conversationId?: string) {
  * Hook for authenticated user conversations
  */
 export function useUserConversation(userId: string, autoLoad = true) {
-  return useConversation({ userId, autoLoad })
+  return useConversation()
 }
 
 /**
  * Hook for anonymous session conversations
  */
 export function useSessionConversation(autoLoad = true) {
-  return useConversation({ autoLoad })
+  return useConversation()
 } 

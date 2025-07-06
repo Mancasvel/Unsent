@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/AuthContext'
 
 export default function HomePage() {
-  const { user, isLoading } = useAuth()
+  const { user, loading } = useAuth()
   const [glitchText, setGlitchText] = useState('')
   const [systemMessage, setSystemMessage] = useState('')
   const [showTerminal, setShowTerminal] = useState(false)
@@ -62,7 +62,7 @@ export default function HomePage() {
     }
   }, [])
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">

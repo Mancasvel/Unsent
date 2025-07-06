@@ -1,4 +1,4 @@
-import { EmotionStage, EMOTION_STAGES, getEmotionStage } from './emotionStages'
+import { EmotionStage, emotionStages, getStageByScore } from './emotionStages'
 
 export interface EmotionAnalysis {
   score: number
@@ -34,7 +34,8 @@ export function analyzeMessage(message: string, timeSpent: number = 0): EmotionA
   
   // Calcular puntuación total
   const score = calculateTotalScore(factors)
-  const stage = getEmotionStage(score)
+  const stageConfig = getStageByScore(score)
+  const stage = stageConfig.id
   const keywords = findMatchingKeywords(text, stage)
   const intensity = calculateIntensity(factors)
   const progressToNext = calculateProgressToNext(score, stage)
@@ -54,9 +55,8 @@ export function analyzeMessage(message: string, timeSpent: number = 0): EmotionA
 function calculateKeywordMatches(text: string): number {
   let matches = 0
   
-  for (const stage of Object.values(EmotionStage)) {
-    const stageData = EMOTION_STAGES[stage]
-    for (const keyword of stageData.keywords) {
+  for (const stageConfig of emotionStages) {
+    for (const keyword of stageConfig.keywords) {
       if (text.includes(keyword)) {
         matches += 1
       }
@@ -155,12 +155,14 @@ function calculateTotalScore(factors: ScoreFactors): number {
  * Encuentra las palabras clave que coinciden con la etapa actual
  */
 function findMatchingKeywords(text: string, stage: EmotionStage): string[] {
-  const stageData = EMOTION_STAGES[stage]
+  const stageConfig = emotionStages.find(s => s.id === stage)
   const matches: string[] = []
   
-  for (const keyword of stageData.keywords) {
-    if (text.includes(keyword)) {
-      matches.push(keyword)
+  if (stageConfig) {
+    for (const keyword of stageConfig.keywords) {
+      if (text.includes(keyword)) {
+        matches.push(keyword)
+      }
     }
   }
   
@@ -179,9 +181,12 @@ function calculateIntensity(factors: ScoreFactors): number {
  * Calcula el progreso hacia la siguiente etapa
  */
 function calculateProgressToNext(score: number, currentStage: EmotionStage): number {
-  const stageData = EMOTION_STAGES[currentStage]
-  const rangeSize = stageData.maxScore - stageData.minScore
-  const progressInStage = score - stageData.minScore
+  const stageConfig = emotionStages.find(s => s.id === currentStage)
+  if (!stageConfig) return 0
+  
+  const [minScore, maxScore] = stageConfig.range
+  const rangeSize = maxScore - minScore
+  const progressInStage = score - minScore
   
   return Math.min((progressInStage / rangeSize) * 100, 100)
 }

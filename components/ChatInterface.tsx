@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/AuthContext'
 import { analyzeMessage } from '@/lib/scoreEngine'
 import { EmotionStage, getStageColors } from '@/lib/emotionStages'
-import { encryptMessage } from '@/lib/encryption'
+import { encryptMessage, generateUserKey, storeUserKey, retrieveUserKey } from '@/lib/encryption'
 
 interface Message {
   id: string
@@ -36,9 +36,9 @@ export default function ChatInterface({
   const [isTyping, setIsTyping] = useState(false)
   const [typingStartTime, setTypingStartTime] = useState<number | null>(null)
   const [overallScore, setOverallScore] = useState(0)
-  const [currentStage, setCurrentStage] = useState<EmotionStage>(EmotionStage.DENIAL)
+  const [currentStage, setCurrentStage] = useState<EmotionStage>('denial')
   const [showAnalysis, setShowAnalysis] = useState(false)
-  const { user, userKey } = useAuth()
+  const { user } = useAuth()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -68,7 +68,22 @@ export default function ChatInterface({
     }
   }
 
+  // Get or generate user encryption key
+  const getUserKey = () => {
+    if (!user?.email) return null
+    
+    // Try to get existing key from localStorage
+    const existingKey = retrieveUserKey(user.email)
+    if (existingKey) return existingKey
+    
+    // Generate new key if none exists
+    const newKey = generateUserKey(user.email)
+    storeUserKey(user.email, newKey)
+    return newKey
+  }
+
   const handleSendMessage = async () => {
+    const userKey = getUserKey()
     if (!currentMessage.trim() || !user || !userKey) return
 
     const timeSpent = typingStartTime ? (Date.now() - typingStartTime) / 1000 : 0
@@ -117,7 +132,7 @@ export default function ChatInterface({
     }
   }
 
-  const stageColors = getStageColors(currentStage)
+  const stageColor = getStageColors(currentStage)
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-black via-purple-900/20 to-black">
@@ -156,7 +171,7 @@ export default function ChatInterface({
                     className="h-2 rounded-full transition-all duration-500"
                     style={{ 
                       width: `${overallScore}%`,
-                      backgroundColor: stageColors.color
+                      backgroundColor: stageColor
                     }}
                   />
                 </div>
@@ -166,7 +181,7 @@ export default function ChatInterface({
                 <h3 className="text-sm font-medium text-gray-300 mb-2">Etapa Actual</h3>
                 <p 
                   className="text-lg font-semibold"
-                  style={{ color: stageColors.color }}
+                  style={{ color: stageColor }}
                 >
                   {currentStage}
                 </p>
@@ -196,7 +211,7 @@ export default function ChatInterface({
                   <span 
                     className="text-xs px-2 py-1 rounded-full bg-white/20"
                     style={{ 
-                      color: getStageColors(message.emotionalAnalysis.stage).color 
+                      color: getStageColors(message.emotionalAnalysis.stage)
                     }}
                   >
                     {message.emotionalAnalysis.stage}
