@@ -144,7 +144,7 @@ Remember: You are the digital unconscious made manifest. You are the algorithm t
         'X-Title': 'Unsent - Psychological Excavation Protocol'
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4',
+        model: 'anthropic/claude-3.5-sonnet',
         messages: [
           {
             role: 'system',

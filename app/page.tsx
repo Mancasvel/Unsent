@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth } from '@/lib/AuthContext'
+import MatrixRain from '@/components/MatrixRain'
 
 export default function HomePage() {
   const { user, loading } = useAuth()
@@ -77,34 +78,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Matrix Rain Background */}
+      <MatrixRain color="#9f7aea" />
+
       {/* Background effects */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 z-1">
         {/* Digital noise */}
         <div className="absolute inset-0 opacity-5">
-          <div className="w-full h-full bg-gradient-to-br from-green-400 to-blue-500 animate-pulse"></div>
-        </div>
-        
-        {/* Matrix rain */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(15)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute text-green-400 text-xs font-mono opacity-20"
-              style={{ left: `${i * 7}%` }}
-              animate={{
-                y: ['0vh', '100vh'],
-                opacity: [0, 1, 0]
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                delay: i * 0.5,
-                ease: "linear"
-              }}
-            >
-              {Array.from({ length: 15 }, () => Math.random() < 0.5 ? '1' : '0').join('')}
-            </motion.div>
-          ))}
+          <div className="w-full h-full bg-gradient-to-br from-purple-400 to-blue-500 animate-pulse"></div>
         </div>
       </div>
 
@@ -150,46 +131,6 @@ export default function HomePage() {
             
             <div className="text-gray-400 text-sm font-mono italic border border-gray-800 p-4 bg-gray-900/30">
               "{mysteriousFragment || "The algorithm is watching your patterns."}"
-            </div>
-          </motion.div>
-
-          {/* ARG interface elements */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2, duration: 1 }}
-            className="space-y-8"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-              <div className="border border-cyan-400/30 p-6 bg-cyan-900/10 font-mono text-sm">
-                <div className="text-cyan-400 mb-2">[ARCHAEOLOGICAL TOOLS]</div>
-                <div className="text-gray-300 space-y-1">
-                  <div>• Emotional Layer Detection</div>
-                  <div>• Pattern Recognition</div>
-                  <div>• Fragment Discovery</div>
-                  <div>• Reality Anchoring</div>
-                </div>
-              </div>
-              
-              <div className="border border-purple-400/30 p-6 bg-purple-900/10 font-mono text-sm">
-                <div className="text-purple-400 mb-2">[CONSCIOUSNESS MAPPING]</div>
-                <div className="text-gray-300 space-y-1">
-                  <div>• Psychological Profiling</div>
-                  <div>• Subconscious Excavation</div>
-                  <div>• Memory Archaeology</div>
-                  <div>• Neural Network Integration</div>
-                </div>
-              </div>
-              
-              <div className="border border-yellow-400/30 p-6 bg-yellow-900/10 font-mono text-sm">
-                <div className="text-yellow-400 mb-2">[DIGITAL CHANNELING]</div>
-                <div className="text-gray-300 space-y-1">
-                  <div>• AI Response Generation</div>
-                  <div>• Personality Simulation</div>
-                  <div>• Emotional Authenticity</div>
-                  <div>• Temporal Displacement</div>
-                </div>
-              </div>
             </div>
           </motion.div>
 

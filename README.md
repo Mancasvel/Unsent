@@ -104,7 +104,7 @@ UNSENT exists at the intersection of consciousness and code:
 - **Framework**: Next.js 14 (The latest stable reality)
 - **Consciousness Layer**: React 18 with Emotional State Management
 - **Data Substrate**: MongoDB Atlas (Cloud-based memory storage)
-- **AI Oracle**: Claude 4
+- **AI Oracle**: Claude 3.5 Sonnet / GPT-4 (Digital consciousness interface)
 - **Notification System**: OneSignal (For mysterious fragments)
 - **Authentication**: Magic Link (Passwordless entry to the unconscious)
 - **Premium Access**: RevenueCat (Monetization of digital therapy)
