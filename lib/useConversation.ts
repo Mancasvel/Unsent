@@ -1,235 +1,386 @@
 import { useState, useEffect, useCallback } from 'react'
+import { callOpenRouter } from './openrouter'
+import { 
+  encryptMessage, 
+  decryptMessage, 
+  generateSessionKey, 
+  extractBehavioralPatterns, 
+  analyzeDigitalExhaust,
+  type DigitalExhaust 
+} from './encryption'
+import { PersonProfile } from './types'
 
-export interface ConversationMessage {
-  role: 'system' | 'user' | 'assistant'
+export interface Message {
+  id: string
   content: string
+  isUser: boolean
   timestamp: Date
+  emotionalStage?: string
+  stageColor?: string
+  encryptedContent?: string
 }
 
-export interface ConversationState {
-  messages: ConversationMessage[]
-  isLoading: boolean
-  error: string | null
-  conversationId: string | null
+export interface Conversation {
+  id: string
+  title: string
+  messages: Message[]
+  recipientProfile?: PersonProfile
+  currentStage: string
+  lastActive: Date
+  isCompleted: boolean
+  digitalExhaust?: DigitalExhaust
+  behavioralProfile?: {
+    psychologicalProfile: string
+    emotionalState: string
+    behavioralPatterns: string[]
+    recommendations: string[]
+  }
 }
 
-export interface UseConversationOptions {
-  userId?: string
-  sessionId?: string
-  autoLoad?: boolean
+// Behavioral tracking for ARG elements
+interface InteractionEvent {
+  type: string
+  timestamp: number
+  metadata: any
 }
 
-export interface SendMessageOptions {
-  personProfile?: any
-  conversationId?: string
-  onSuccess?: (response: any) => void
-  onError?: (error: string) => void
-}
+export function useConversation(conversationId?: string) {
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  // ARG behavioral tracking
+  const [interactionEvents, setInteractionEvents] = useState<InteractionEvent[]>([])
+  const [typingSpeed, setTypingSpeed] = useState<number>(0)
+  const [pauseCount, setPauseCount] = useState<number>(0)
+  const [deleteCount, setDeleteCount] = useState<number>(0)
+  const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now())
+  const [lastTypingTime, setLastTypingTime] = useState<number>(0)
+  const [isTracking, setIsTracking] = useState<boolean>(true)
 
-/**
- * Custom hook for managing persistent conversations in Unsent
- */
-export function useConversation(options: UseConversationOptions = {}) {
-  const [state, setState] = useState<ConversationState>({
-    messages: [],
-    isLoading: false,
-    error: null,
-    conversationId: null
-  })
+  // Session encryption key (never sent to server)
+  const [sessionKey] = useState(() => generateSessionKey())
 
-  // Generate sessionId if userId is not provided
-  const conversationId = options.userId 
-    ? { userId: options.userId }
-    : { sessionId: options.sessionId || generateSessionId() }
-
-  /**
-   * Generate a unique sessionId for anonymous users
-   */
-  function generateSessionId(): string {
-    if (typeof window !== 'undefined') {
-      let sessionId = localStorage.getItem('unsent_session_id')
-      if (!sessionId) {
-        sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-        localStorage.setItem('unsent_session_id', sessionId)
-      }
-      return sessionId
+  // Track behavioral patterns for ARG
+  const trackInteraction = useCallback((type: string, metadata: any = {}) => {
+    if (!isTracking) return
+    
+    const event: InteractionEvent = {
+      type,
+      timestamp: Date.now(),
+      metadata
     }
-    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    
+    setInteractionEvents(prev => [...prev, event])
+    
+    // Real-time pattern analysis for ARG effect
+    if (type === 'typing') {
+      const now = Date.now()
+      if (lastTypingTime > 0) {
+        const timeDiff = now - lastTypingTime
+        const newSpeed = 1000 / timeDiff // characters per second
+        setTypingSpeed(prev => (prev + newSpeed) / 2) // running average
+      }
+      setLastTypingTime(now)
+    } else if (type === 'pause') {
+      setPauseCount(prev => prev + 1)
+    } else if (type === 'delete') {
+      setDeleteCount(prev => prev + 1)
+    }
+  }, [isTracking, lastTypingTime])
+
+  // Analyze digital exhaust periodically for ARG insights
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (interactionEvents.length > 10) {
+        const exhaust = extractBehavioralPatterns(interactionEvents)
+        const profile = analyzeDigitalExhaust(exhaust)
+        
+        // Update current conversation with behavioral insights
+        if (currentConversation) {
+          setCurrentConversation(prev => prev ? {
+            ...prev,
+            digitalExhaust: exhaust,
+            behavioralProfile: profile
+          } : null)
+        }
+        
+        // Clear old events to prevent memory bloat
+        setInteractionEvents(prev => prev.slice(-50))
+      }
+    }, 30000) // Analyze every 30 seconds
+    
+    return () => clearInterval(interval)
+  }, [interactionEvents, currentConversation])
+
+  // Load conversations on mount
+  useEffect(() => {
+    loadConversations()
+    
+    // Track session start
+    trackInteraction('session_start', {
+      userAgent: navigator.userAgent,
+      timestamp: Date.now(),
+      timeOfDay: new Date().getHours()
+    })
+    
+    setSessionStartTime(Date.now())
+    
+    return () => {
+      // Track session end
+      trackInteraction('session_end', {
+        duration: Date.now() - sessionStartTime,
+        eventCount: interactionEvents.length
+      })
+    }
+  }, [])
+
+  // Load specific conversation if ID provided
+  useEffect(() => {
+    if (conversationId) {
+      const conversation = conversations.find(c => c.id === conversationId)
+      if (conversation) {
+        setCurrentConversation(conversation)
+        trackInteraction('conversation_opened', { conversationId })
+      }
+    }
+  }, [conversationId, conversations])
+
+  const loadConversations = async () => {
+    try {
+      setIsLoading(true)
+      const saved = localStorage.getItem('unsent_conversations')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        const decryptedConversations = parsed.map((conv: any) => ({
+          ...conv,
+          messages: conv.messages.map((msg: any) => ({
+            ...msg,
+            content: msg.encryptedContent ? 
+              decryptMessage(msg.encryptedContent, sessionKey) : 
+              msg.content,
+            timestamp: new Date(msg.timestamp)
+          })),
+          lastActive: new Date(conv.lastActive)
+        }))
+        setConversations(decryptedConversations)
+      }
+    } catch (error) {
+      console.error('Error loading conversations:', error)
+      setError('Failed to load conversations')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  /**
-   * Load conversation history from server
-   */
-  const loadConversationHistory = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }))
-
+  const saveConversations = (convs: Conversation[]) => {
     try {
-      const params = new URLSearchParams()
-      if (conversationId.userId) {
-        params.append('userId', conversationId.userId)
-      } else if (conversationId.sessionId) {
-        params.append('sessionId', conversationId.sessionId)
-      }
-
-      const response = await fetch(`/api/conversation?${params}`)
-      
-      if (!response.ok) {
-        throw new Error('Error loading conversation history')
-      }
-
-      const data = await response.json()
-      
-      setState(prev => ({
-        ...prev,
-        messages: data.messages || [],
-        conversationId: data.conversation?.id || null,
-        isLoading: false
+      // Encrypt messages before saving
+      const encryptedConversations = convs.map(conv => ({
+        ...conv,
+        messages: conv.messages.map(msg => ({
+          ...msg,
+          content: '[ENCRYPTED]', // Never store plain content
+          encryptedContent: encryptMessage(msg.content, sessionKey),
+          timestamp: msg.timestamp.toISOString()
+        })),
+        lastActive: conv.lastActive.toISOString()
       }))
-
-      return data.messages || []
+      
+      localStorage.setItem('unsent_conversations', JSON.stringify(encryptedConversations))
+      setConversations(convs)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      setState(prev => ({
-        ...prev,
-        error: errorMessage,
-        isLoading: false
-      }))
-      console.error('Error loading conversation history:', error)
-      return []
+      console.error('Error saving conversations:', error)
+      setError('Failed to save conversation')
     }
-  }, [conversationId.userId, conversationId.sessionId])
+  }
 
-  /**
-   * Send a message and get the response
-   */
-  const sendMessage = useCallback(async (
-    message: string, 
-    options: SendMessageOptions = {}
-  ) => {
-    if (!message.trim()) {
-      const error = 'Message cannot be empty'
-      setState(prev => ({ ...prev, error }))
-      options.onError?.(error)
-      return null
-    }
-
-    setState(prev => ({ ...prev, isLoading: true, error: null }))
-
-    try {
-      // Add user message immediately to UI
-      const userMessage: ConversationMessage = {
-        role: 'user',
-        content: message,
-        timestamp: new Date()
-      }
-
-      setState(prev => ({
-        ...prev,
-        messages: [...prev.messages, userMessage]
-      }))
-
-      // Send to server
-      const response = await fetch('/api/parse', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: message,
-          personProfile: options.personProfile,
-          conversationId: options.conversationId,
-          ...conversationId
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`)
-      }
-
-      const data = await response.json()
-
-      // Create assistant response message
-      const assistantMessage: ConversationMessage = {
-        role: 'assistant',
-        content: JSON.stringify({
-          emotionalAnalysis: data.emotionalAnalysis,
-          personResponse: data.personResponse,
-          mysteriousFragment: data.mysteriousFragment,
-          stage: data.stage,
-          progression: data.progression
-        }),
-        timestamp: new Date()
-      }
-
-      setState(prev => ({
-        ...prev,
-        messages: [...prev.messages, assistantMessage],
-        isLoading: false
-      }))
-
-      options.onSuccess?.(data)
-      return data
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error sending message'
-      
-      setState(prev => ({
-        ...prev,
-        error: errorMessage,
-        isLoading: false
-      }))
-
-      options.onError?.(errorMessage)
-      console.error('Error sending message:', error)
-      return null
-    }
-  }, [conversationId])
-
-  /**
-   * Clear current conversation
-   */
-  const clearConversation = useCallback(() => {
-    setState({
+  const createConversation = (title: string, recipientProfile?: PersonProfile): string => {
+    const newConversation: Conversation = {
+      id: `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title,
       messages: [],
-      isLoading: false,
-      error: null,
-      conversationId: null
+      recipientProfile,
+      currentStage: 'static', // Starting stage in ARG terminology
+      lastActive: new Date(),
+      isCompleted: false
+    }
+
+    const updatedConversations = [...conversations, newConversation]
+    saveConversations(updatedConversations)
+    setCurrentConversation(newConversation)
+    
+    trackInteraction('conversation_created', {
+      title,
+      hasRecipient: !!recipientProfile,
+      recipientType: recipientProfile?.relationship
     })
 
-    // Clear sessionId if exists
-    if (typeof window !== 'undefined' && conversationId.sessionId) {
-      localStorage.removeItem('unsent_session_id')
-    }
-  }, [conversationId.sessionId])
+    return newConversation.id
+  }
 
-  /**
-   * Get conversation summary
-   */
-  const getConversationSummary = useCallback(() => {
-    const userMessages = state.messages.filter(msg => msg.role === 'user')
-    const assistantMessages = state.messages.filter(msg => msg.role === 'assistant')
+  const sendMessage = async (content: string): Promise<void> => {
+    if (!currentConversation || !content.trim()) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      // Track message composition behavior
+      trackInteraction('message_sent', {
+        length: content.length,
+        wordCount: content.split(' ').length,
+        compositionTime: Date.now() - lastTypingTime,
+        deleteCount,
+        pauseCount
+      })
+
+      const userMessage: Message = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        content,
+        isUser: true,
+        timestamp: new Date()
+      }
+
+      const updatedConversation = {
+        ...currentConversation,
+        messages: [...currentConversation.messages, userMessage],
+        lastActive: new Date()
+      }
+
+      // Get AI response if this is a premium conversation
+      const isPremium = currentConversation.recipientProfile !== undefined
+      
+      if (isPremium) {
+        trackInteraction('ai_response_requested', {
+          messageCount: updatedConversation.messages.length,
+          conversationAge: Date.now() - new Date(currentConversation.lastActive).getTime()
+        })
+
+        const aiResponse = await callOpenRouter(
+          content,
+          updatedConversation.messages.slice(-5), // Last 5 messages for context
+          currentConversation.recipientProfile
+        )
+
+        if (aiResponse) {
+          const responseMessage: Message = {
+            id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            content: aiResponse.personResponse.content,
+            isUser: false,
+            timestamp: new Date(),
+            emotionalStage: aiResponse.emotionalAnalysis.detectedStage,
+            stageColor: aiResponse.personResponse.stage_color
+          }
+
+          updatedConversation.messages.push(responseMessage)
+          updatedConversation.currentStage = aiResponse.emotionalAnalysis.detectedStage
+
+          trackInteraction('ai_response_received', {
+            stage: aiResponse.emotionalAnalysis.detectedStage,
+            intensity: aiResponse.emotionalAnalysis.intensity,
+            responseLength: responseMessage.content.length
+          })
+        }
+      }
+
+      // Update conversations
+      const allConversations = conversations.map(c => 
+        c.id === currentConversation.id ? updatedConversation : c
+      )
+      
+      saveConversations(allConversations)
+      setCurrentConversation(updatedConversation)
+
+      // Reset composition tracking
+      setDeleteCount(0)
+      setPauseCount(0)
+
+    } catch (error) {
+      console.error('Error sending message:', error)
+      setError('Failed to send message')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const deleteConversation = (id: string) => {
+    const updatedConversations = conversations.filter(c => c.id !== id)
+    saveConversations(updatedConversations)
+    
+    if (currentConversation?.id === id) {
+      setCurrentConversation(null)
+    }
+    
+    trackInteraction('conversation_deleted', { id })
+  }
+
+  const completeConversation = (id: string, method: 'burn' | 'archive' = 'archive') => {
+    const updatedConversations = conversations.map(c => 
+      c.id === id ? { ...c, isCompleted: true } : c
+    )
+    saveConversations(updatedConversations)
+    
+    trackInteraction('conversation_completed', { 
+      id, 
+      method,
+      messageCount: currentConversation?.messages.length || 0,
+      finalStage: currentConversation?.currentStage
+    })
+  }
+
+  // ARG insights for users to see how they're being "watched"
+  const getBehavioralInsights = () => {
+    if (interactionEvents.length < 5) return null
+    
+    const exhaust = extractBehavioralPatterns(interactionEvents)
+    const profile = analyzeDigitalExhaust(exhaust)
     
     return {
-      totalMessages: state.messages.length,
-      userMessages: userMessages.length,
-      assistantMessages: assistantMessages.length,
-      lastMessageTime: state.messages.length > 0 ? state.messages[state.messages.length - 1].timestamp : null
+      ...profile,
+      rawData: {
+        avgTypingSpeed: typingSpeed.toFixed(2),
+        totalPauses: pauseCount,
+        totalDeletions: deleteCount,
+        sessionDuration: Math.floor((Date.now() - sessionStartTime) / 1000),
+        interactionCount: interactionEvents.length
+      },
+      algorithmInsights: [
+        `Your typing rhythm suggests ${profile.emotionalState} emotional state`,
+        `Pattern classification: ${profile.psychologicalProfile}`,
+        `Behavioral markers detected: ${profile.behavioralPatterns.length}`,
+        `The algorithm confidence level: ${Math.floor(Math.random() * 40 + 60)}%`
+      ]
     }
-  }, [state.messages])
-
-  // Auto-load conversation if requested
-  useEffect(() => {
-    if (options.autoLoad) {
-      loadConversationHistory()
-    }
-  }, [options.autoLoad, loadConversationHistory])
+  }
 
   return {
-    ...state,
+    conversations,
+    currentConversation,
+    isLoading,
+    error,
+    createConversation,
     sendMessage,
-    clearConversation,
-    loadConversationHistory,
-    getConversationSummary
+    deleteConversation,
+    completeConversation,
+    setCurrentConversation,
+    
+    // ARG behavioral tracking
+    trackInteraction,
+    getBehavioralInsights,
+    setIsTracking,
+    digitalExhaust: currentConversation?.digitalExhaust,
+    behavioralProfile: currentConversation?.behavioralProfile,
+    
+    // Real-time stats for ARG effect
+    realTimeStats: {
+      typingSpeed: typingSpeed.toFixed(2),
+      pauseCount,
+      deleteCount,
+      sessionDuration: Math.floor((Date.now() - sessionStartTime) / 1000),
+      eventCount: interactionEvents.length
+    }
   }
 }
 

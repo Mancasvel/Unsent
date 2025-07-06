@@ -1,87 +1,102 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { User, AuthSession } from './types'
-import { generateUserKey, storeUserKey, retrieveUserKey, removeUserKey } from './encryption'
+import { User } from './types'
 
 interface AuthContextType {
   user: User | null
-  session: AuthSession | null
-  isLoading: boolean
-  isAuthenticated: boolean
-  login: (email: string) => Promise<{ success: boolean; message: string }>
+  loading: boolean
+  login: (email: string, password: string) => Promise<boolean>
   logout: () => Promise<void>
-  verifyMagicLink: (token: string) => Promise<{ success: boolean; message: string }>
-  checkSession: () => Promise<void>
-  updateUserData: (userData: Partial<User>) => void
-  userKey: string | null
-  hasEncryptionKey: boolean
-  setupEncryption: (userId: string) => void
-  clearEncryption: () => void
+  register: (email: string, password: string, name: string) => Promise<boolean>
+  sendMagicLink: (email: string) => Promise<boolean>
+  isAuthenticated: boolean
+  userIdentity: string | null
+  setUserIdentity: (identity: string) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
-
-interface AuthProviderProps {
-  children: ReactNode
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<AuthSession | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [userKey, setUserKey] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [userIdentity, setUserIdentity] = useState<string | null>(null)
 
-  const isAuthenticated = !!user && !!session
-  const hasEncryptionKey = !!userKey
-
-  // Verificar sesión al inicializar
   useEffect(() => {
-    checkSession()
+    // Check if user is logged in
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        })
+        
+        if (response.ok) {
+          const userData = await response.json()
+          setUser(userData)
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Load user identity from onboarding
+    const identity = localStorage.getItem('unsent_user_identity')
+    if (identity) {
+      setUserIdentity(identity)
+    }
+
+    checkAuth()
   }, [])
 
-  // Configurar cifrado cuando hay usuario
-  useEffect(() => {
-    if (user?._id) {
-      setupEncryption(user._id.toString())
-    }
-  }, [user])
-
-  const checkSession = async () => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('/api/auth/me', {
-        method: 'GET',
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
         credentials: 'include'
       })
 
       if (response.ok) {
-        const data = await response.json()
-        setUser(data.user)
-        setSession(data.session)
-      } else {
-        setUser(null)
-        setSession(null)
-        clearEncryption()
+        const userData = await response.json()
+        setUser(userData)
+        return true
       }
+      return false
     } catch (error) {
-      console.error('Error checking session:', error)
-      setUser(null)
-      setSession(null)
-      clearEncryption()
-    } finally {
-      setIsLoading(false)
+      console.error('Login failed:', error)
+      return false
     }
   }
 
-  const login = async (email: string): Promise<{ success: boolean; message: string }> => {
+  const register = async (email: string, password: string, name: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const userData = await response.json()
+        setUser(userData)
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Registration failed:', error)
+      return false
+    }
+  }
+
+  const sendMagicLink = async (email: string): Promise<boolean> => {
     try {
       const response = await fetch('/api/auth/magic-link', {
         method: 'POST',
@@ -89,118 +104,63 @@ export function AuthProvider({ children }: AuthProviderProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email }),
+        credentials: 'include'
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
-        return {
-          success: true,
-          message: 'Enlace mágico enviado a tu email. Revisa tu bandeja de entrada.'
-        }
-      } else {
-        return {
-          success: false,
-          message: data.error || 'Error al enviar enlace mágico'
-        }
-      }
+      return response.ok
     } catch (error) {
-      console.error('Error in login:', error)
-      return {
-        success: false,
-        message: 'Error de conexión. Intenta de nuevo.'
-      }
+      console.error('Magic link failed:', error)
+      return false
     }
   }
 
-  const verifyMagicLink = async (token: string): Promise<{ success: boolean; message: string }> => {
-    try {
-      const response = await fetch('/api/auth/verify-magic-link', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setUser(data.user)
-        setSession(data.session)
-        return {
-          success: true,
-          message: 'Sesión iniciada correctamente'
-        }
-      } else {
-        return {
-          success: false,
-          message: data.error || 'Enlace inválido o expirado'
-        }
-      }
-    } catch (error) {
-      console.error('Error verifying magic link:', error)
-      return {
-        success: false,
-        message: 'Error de conexión. Intenta de nuevo.'
-      }
-    }
-  }
-
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       })
-    } catch (error) {
-      console.error('Error in logout:', error)
-    } finally {
       setUser(null)
-      setSession(null)
-      clearEncryption()
+      
+      // Clear local storage
+      localStorage.removeItem('unsent_user_identity')
+      localStorage.removeItem('unsent_first_recipient')
+      localStorage.removeItem('unsent_onboarding_complete')
+      
+      setUserIdentity(null)
+    } catch (error) {
+      console.error('Logout failed:', error)
     }
   }
 
-  const updateUserData = (userData: Partial<User>) => {
-    if (user) {
-      setUser({ ...user, ...userData })
-    }
-  }
-
-  const setupEncryption = (userId: string) => {
-    const existingKey = retrieveUserKey(userId)
-    if (existingKey) {
-      setUserKey(existingKey)
-    } else {
-      const newKey = generateUserKey(userId)
-      storeUserKey(userId, newKey)
-      setUserKey(newKey)
-    }
-  }
-
-  const clearEncryption = () => {
-    if (user?._id) {
-      removeUserKey(user._id.toString())
-    }
-    setUserKey(null)
+  const updateUserIdentity = (identity: string) => {
+    setUserIdentity(identity)
+    localStorage.setItem('unsent_user_identity', identity)
   }
 
   const value: AuthContextType = {
     user,
-    session,
-    isLoading,
-    isAuthenticated,
+    loading,
     login,
     logout,
-    verifyMagicLink,
-    checkSession,
-    updateUserData,
-    userKey,
-    hasEncryptionKey,
-    setupEncryption,
-    clearEncryption
+    register,
+    sendMagicLink,
+    isAuthenticated: !!user,
+    userIdentity,
+    setUserIdentity: updateUserIdentity
   }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth(): AuthContextType {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
 } 

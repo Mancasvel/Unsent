@@ -1,7 +1,7 @@
 {
   "name": "unsent",
   "version": "1.0.0",
-  "description": "Progressive Web App para escribir mensajes no enviados con análisis emocional y respuestas de IA",
+  "description": "Progressive Web App for writing unsent messages with emotional analysis and AI responses",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -20,7 +20,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-onesignal": "^3.0.1",
-    "@revenuecat/purchases-js": "^3.0.0",
+    "@revenuecat/purchases-js": "^1.9.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
