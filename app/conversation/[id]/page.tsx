@@ -178,7 +178,7 @@ export default function ConversationPage() {
     }
   }
 
-  const handleNewMessage = async (content: string) => {
+  const handleNewMessage = (content: string, apiResponse?: any) => {
     if (!conversation) return
 
     // Create a temporary message for immediate UI feedback
@@ -205,54 +205,20 @@ export default function ConversationPage() {
 
     setConversation(updatedConversation)
 
-    try {
-      // Save message to database via API
-      const response = await fetch(`/api/conversations/${conversationId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.id || 'demo-user'
-        },
-        body: JSON.stringify({
-          content: content.trim(),
-          timeSpent: 0
-        })
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log('Message saved to database:', result)
-        
-        // Update conversation with server response if available
-        if (result.conversation) {
-          setConversation(prev => prev ? {
-            ...prev,
-            emotionalScore: result.conversation.emotionalScore,
-            stage: result.conversation.stage
-          } : prev)
-        }
-        
-        // Update localStorage with successful save
-        localStorage.setItem(
-          `unsent_conversation_${conversationId}`,
-          JSON.stringify(updatedConversation)
-        )
-      } else {
-        console.error('Failed to save message to database')
-        // Still save to localStorage as fallback
-        localStorage.setItem(
-          `unsent_conversation_${conversationId}`,
-          JSON.stringify(updatedConversation)
-        )
-      }
-    } catch (error) {
-      console.error('Error saving message:', error)
-      // Save to localStorage as fallback
-      localStorage.setItem(
-        `unsent_conversation_${conversationId}`,
-        JSON.stringify(updatedConversation)
-      )
+    // Update conversation with server response if available
+    if (apiResponse?.conversation) {
+      setConversation(prev => prev ? {
+        ...prev,
+        emotionalScore: apiResponse.conversation.emotionalScore,
+        stage: apiResponse.conversation.stage
+      } : prev)
     }
+
+    // Save to localStorage (ChatInterface handles the API call)
+    localStorage.setItem(
+      `unsent_conversation_${conversationId}`,
+      JSON.stringify(updatedConversation)
+    )
   }
 
   if (authLoading || loading) {

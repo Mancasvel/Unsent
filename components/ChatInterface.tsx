@@ -25,7 +25,7 @@ interface ChatInterfaceProps {
   conversationTitle?: string
   isPremium?: boolean
   messages?: Message[]
-  onNewMessage?: (content: string) => void
+  onNewMessage?: (content: string, apiResponse?: any) => void
   recipientName?: string
   currentStage?: string
   isAIEnabled?: boolean
@@ -161,9 +161,9 @@ export default function ChatInterface({
         // Add to local state
         setMessages(prev => [...prev, newMessage])
         
-        // Call external callback if provided
+        // Call external callback if provided, passing API response
         if (onNewMessage) {
-          onNewMessage(currentMessage.trim())
+          onNewMessage(currentMessage.trim(), result)
         }
         
         // Update overall score from API response if available
