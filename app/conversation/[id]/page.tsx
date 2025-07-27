@@ -5,13 +5,20 @@ import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/AuthContext'
 import ChatInterface from '@/components/ChatInterface'
-import { getStageColor } from '@/lib/emotionStages'
+import { getStageColor, EmotionStage } from '@/lib/emotionStages'
 
 interface Message {
   id: string
   content: string
-  isUser: boolean
   timestamp: Date
+  emotionalAnalysis: {
+    score: number
+    stage: EmotionStage
+    intensity: number
+    keywords: string[]
+  }
+  timeSpent: number
+  isUser?: boolean
   emotionalScore?: number
   stage?: string
 }
@@ -171,29 +178,81 @@ export default function ConversationPage() {
     }
   }
 
-  const handleNewMessage = (content: string) => {
+  const handleNewMessage = async (content: string) => {
     if (!conversation) return
 
-    const newMessage: Message = {
+    // Create a temporary message for immediate UI feedback
+    const tempMessage: Message = {
       id: Date.now().toString(),
       content,
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
+      emotionalAnalysis: {
+        score: 0,
+        stage: 'denial' as EmotionStage,
+        intensity: 0,
+        keywords: []
+      },
+      timeSpent: 0
     }
 
+    // Update local state immediately for responsive UI
     const updatedConversation = {
       ...conversation,
-      messages: [...conversation.messages, newMessage],
+      messages: [...conversation.messages, tempMessage],
       updatedAt: new Date()
     }
 
     setConversation(updatedConversation)
 
-    // Save to localStorage
-    localStorage.setItem(
-      `unsent_conversation_${conversationId}`,
-      JSON.stringify(updatedConversation)
-    )
+    try {
+      // Save message to database via API
+      const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || 'demo-user'
+        },
+        body: JSON.stringify({
+          content: content.trim(),
+          timeSpent: 0
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('Message saved to database:', result)
+        
+        // Update conversation with server response if available
+        if (result.conversation) {
+          setConversation(prev => prev ? {
+            ...prev,
+            emotionalScore: result.conversation.emotionalScore,
+            stage: result.conversation.stage
+          } : prev)
+        }
+        
+        // Update localStorage with successful save
+        localStorage.setItem(
+          `unsent_conversation_${conversationId}`,
+          JSON.stringify(updatedConversation)
+        )
+      } else {
+        console.error('Failed to save message to database')
+        // Still save to localStorage as fallback
+        localStorage.setItem(
+          `unsent_conversation_${conversationId}`,
+          JSON.stringify(updatedConversation)
+        )
+      }
+    } catch (error) {
+      console.error('Error saving message:', error)
+      // Save to localStorage as fallback
+      localStorage.setItem(
+        `unsent_conversation_${conversationId}`,
+        JSON.stringify(updatedConversation)
+      )
+    }
   }
 
   if (authLoading || loading) {
@@ -216,10 +275,10 @@ export default function ConversationPage() {
           <p className="text-gray-400 mb-6">{error}</p>
           <div className="space-x-4">
             <button
-              onClick={() => router.push('/chats')}
+              onClick={() => router.push('/conversations')}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              Back to Chats
+              Back to Conversations
             </button>
             <button
               onClick={() => loadConversation()}
@@ -241,17 +300,17 @@ export default function ConversationPage() {
           <h1 className="text-2xl font-bold text-white mb-2">Conversation Not Found</h1>
           <p className="text-gray-400 mb-6">This conversation doesn't exist or has been deleted.</p>
           <button
-            onClick={() => router.push('/chats')}
+            onClick={() => router.push('/conversations')}
             className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
           >
-            Back to Chats
+            Back to Conversations
           </button>
         </div>
       </div>
     )
   }
 
-  const stageColor = getStageColor(conversation.stage)
+  const stageColor = getStageColor(conversation.stage as EmotionStage)
 
   return (
     <div className="min-h-screen bg-black">
@@ -261,7 +320,7 @@ export default function ConversationPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => router.push('/chats')}
+                onClick={() => router.push('/conversations')}
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 ← Back

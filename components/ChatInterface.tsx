@@ -306,7 +306,7 @@ export default function ChatInterface({
                 <div className="max-w-[80%] bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-2xl rounded-br-sm">
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   <div className="mt-2 text-xs opacity-70">
-                    {message.timestamp.toLocaleTimeString()}
+                    {new Date(message.timestamp).toLocaleTimeString()}
                   </div>
                 </div>
               </div>

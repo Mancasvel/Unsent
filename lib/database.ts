@@ -260,7 +260,6 @@ export async function createConversation(
       // Vectorización
       isVectorized: false,
       vectorIds: [],
-      
       readyForClosure: false,
       metadata: {
         totalWords: 0,
@@ -378,13 +377,21 @@ export async function getConversationById(conversationId: string, userId: string
         })
       }
     } catch (error) {
-      // If ObjectId is invalid, continue with string search
+      // If ObjectId is invalid, continue with other searches
     }
     
-    // If not found, try to find by title or custom identifier
-    if (!conversation) {
+    // If not found and it's not an ObjectId, try to find by custom conversationId field
+    if (!conversation && conversationId.length !== 24) {
       conversation = await db.collection('conversations').findOne({ 
-        title: conversationId,
+        conversationId: conversationId,
+        userId 
+      })
+    }
+    
+    // If still not found, also try searching by title patterns for timestamp-based IDs
+    if (!conversation && conversationId.match(/^\d{13}$/)) {
+      conversation = await db.collection('conversations').findOne({ 
+        title: { $regex: conversationId },
         userId 
       })
     }
@@ -409,6 +416,18 @@ export async function getOrCreateConversation(
       return conversation
     }
     
+    // Double-check with a direct query to prevent race conditions
+    if (conversationId.length !== 24) {
+      conversation = await db.collection('conversations').findOne({ 
+        conversationId: conversationId,
+        userId 
+      })
+      
+      if (conversation) {
+        return conversation
+      }
+    }
+    
     // If conversation doesn't exist, create it
     const now = new Date()
     
@@ -430,17 +449,35 @@ export async function getOrCreateConversation(
     const personResult = await db.collection('person_profiles').insertOne(personProfile)
     const personId = personResult.insertedId.toString()
     
-    // Generate a unique title if conversationId is not descriptive
+    // Generate a meaningful title based on context
     let title = `Conversation with ${recipientName || 'Someone'}`
-    if (conversationId.length === 24 && /^[0-9a-fA-F]{24}$/.test(conversationId)) {
-      title = `Conversation ${new Date().toLocaleDateString()}`
+    
+    // If conversationId looks like a timestamp, create a more meaningful title
+    if (conversationId.match(/^\d{13}$/)) {
+      // It's a timestamp ID
+      const date = new Date(parseInt(conversationId))
+      const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const dateStr = date.toLocaleDateString()
+      title = `Unsent message (${dateStr} ${timeStr})`
+    } else if (conversationId.length === 24 && /^[0-9a-fA-F]{24}$/.test(conversationId)) {
+      // It's a MongoDB ObjectId
+      title = `New conversation`
+    } else if (conversationId.length > 5) {
+      // It's a custom ID, try to make it more readable
+      const readable = conversationId.replace(/[_-]/g, ' ').replace(/\d+/g, '').trim()
+      if (readable.length > 2) {
+        title = `Conversation: ${readable}`
+      } else {
+        title = `New conversation`
+      }
     } else {
-      title = `Conversation ${conversationId}`
+      title = `New conversation`
     }
     
     const newConversation: Omit<Conversation, '_id'> = {
       userId,
       personId,
+      conversationId: conversationId.length !== 24 ? conversationId : undefined, // Store custom ID for non-ObjectId conversations
       title,
       description: `Auto-created conversation for ${recipientName || 'Someone'}`,
       createdAt: now,
@@ -465,7 +502,7 @@ export async function getOrCreateConversation(
       aiNextResponse: undefined,
       isVectorized: false,
       vectorIds: [],
-      archivedAt: undefined,
+      readyForClosure: false,
       metadata: {
         totalWords: 0,
         avgWordsPerMessage: 0,
@@ -811,6 +848,58 @@ export async function handleRevenueCatWebhook(webhookEvent: RevenueCatWebhookEve
       default:
         console.log(`Unhandled webhook event type: ${event.type}`)
     }
+  })
+}
+
+/**
+ * Clean up duplicate conversations for a user
+ */
+export async function cleanupDuplicateConversations(userId: string): Promise<number> {
+  return withUnsentDB(async (db) => {
+    let cleanedCount = 0
+    
+    // Find conversations with the same conversationId
+    const conversationsWithCustomId = await db.collection('conversations')
+      .find({ 
+        userId,
+        conversationId: { $exists: true, $ne: null }
+      })
+      .toArray()
+    
+    // Group by conversationId
+    const groups: { [key: string]: any[] } = {}
+    for (const conv of conversationsWithCustomId) {
+      const id = conv.conversationId
+      if (!groups[id]) {
+        groups[id] = []
+      }
+      groups[id].push(conv)
+    }
+    
+    // For each group with duplicates, keep the one with the most messages
+    for (const [conversationId, conversations] of Object.entries(groups)) {
+      if (conversations.length > 1) {
+        // Sort by message count (descending), then by creation date (ascending)
+        conversations.sort((a: any, b: any) => {
+          if (a.messageCount !== b.messageCount) {
+            return b.messageCount - a.messageCount
+          }
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        })
+        
+        // Keep the first one, delete the rest
+        const [keepConversation, ...duplicates] = conversations
+        
+        for (const duplicate of duplicates) {
+          await db.collection('conversations').deleteOne({ _id: duplicate._id })
+          cleanedCount++
+        }
+        
+        console.log(`Cleaned up ${duplicates.length} duplicate conversations for conversationId: ${conversationId}`)
+      }
+    }
+    
+    return cleanedCount
   })
 }
 

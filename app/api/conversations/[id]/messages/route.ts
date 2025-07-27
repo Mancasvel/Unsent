@@ -17,7 +17,8 @@ export async function POST(
       )
     }
 
-    const conversationId = params.id
+    // Await params before accessing properties (Next.js 15 requirement)
+    const { id: conversationId } = await params
     const { content, timeSpent = 0 } = await request.json()
 
     // Validate input
@@ -102,7 +103,8 @@ export async function GET(
       )
     }
 
-    const conversationId = params.id
+    // Await params before accessing properties (Next.js 15 requirement)
+    const { id: conversationId } = await params
 
     // TODO: Implement getting messages for a conversation
     // For now, return empty array

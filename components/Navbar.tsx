@@ -71,23 +71,10 @@ export function NavbarComponent({ onNewConversation }: NavbarComponentProps) {
         {/* Contenido central - navegación */}
         <NavbarContent className="hidden lg:flex gap-1" justify="center">
           <NavbarItem>
-            <Link href="/chats">
-              <Button
-                variant="ghost"
-                className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium"
-              >
-                Chats
-              </Button>
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
             <Link href="/conversations">
-              <Button
-                variant="ghost"
-                className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium"
-              >
+              <span className="text-gray-300 hover:text-white transition-colors cursor-pointer">
                 Conversations
-              </Button>
+              </span>
             </Link>
           </NavbarItem>
           <NavbarItem>

@@ -257,6 +257,7 @@ export interface Conversation {
   _id?: ObjectId
   userId: string
   personId: string // Referencia al perfil de la persona
+  conversationId?: string // Custom conversation ID for non-ObjectId conversations
   title: string // Título generado automáticamente o por el usuario
   description?: string // Descripción opcional
   createdAt: Date

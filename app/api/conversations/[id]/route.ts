@@ -16,7 +16,8 @@ export async function GET(
       )
     }
 
-    const conversationId = params.id
+    // Await params before accessing properties (Next.js 15 requirement)
+    const { id: conversationId } = await params
 
     // Validate conversation ID
     if (!conversationId) {
@@ -134,7 +135,8 @@ export async function PUT(
       )
     }
 
-    const conversationId = params.id
+    // Await params before accessing properties (Next.js 15 requirement)
+    const { id: conversationId } = await params
     const updateData = await request.json()
 
     // Validate conversation ID
@@ -178,7 +180,8 @@ export async function DELETE(
       )
     }
 
-    const conversationId = params.id
+    // Await params before accessing properties (Next.js 15 requirement)
+    const { id: conversationId } = await params
 
     // Validate conversation ID
     if (!conversationId) {
