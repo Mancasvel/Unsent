@@ -549,10 +549,17 @@ export async function getConversationWithMessages(conversationId: string, userId
     // Get person profile
     let personProfile = undefined
     if (conversation.personId) {
-      personProfile = await db.collection('person_profiles').findOne({
-        _id: new ObjectId(conversation.personId),
-        userId
-      })
+      try {
+        // Validate ObjectId format before using it
+        if (conversation.personId.length === 24 && /^[0-9a-fA-F]{24}$/.test(conversation.personId)) {
+          personProfile = await db.collection('person_profiles').findOne({
+            _id: new ObjectId(conversation.personId),
+            userId
+          })
+        }
+      } catch (error) {
+        console.log('Invalid personId format:', conversation.personId)
+      }
     }
     
     return {

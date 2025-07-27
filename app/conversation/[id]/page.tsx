@@ -120,7 +120,16 @@ export default function ConversationPage() {
           id: conversationId,
           title: localConversation.title || `To: ${localConversation.recipient || 'Someone'}`,
           recipientName: localConversation.recipient || 'Someone',
-          messages: localConversation.messages || [],
+          messages: (localConversation.messages || []).map((msg: any) => ({
+            ...msg,
+            emotionalAnalysis: msg.emotionalAnalysis || {
+              score: msg.emotionalScore || 0,
+              stage: msg.stage || 'denial',
+              intensity: 0,
+              keywords: []
+            },
+            timeSpent: msg.timeSpent || 0
+          })),
           emotionalScore: localConversation.emotionalScore || 0,
           stage: (localConversation.emotionalStage === 'fog' ? 'denial' : localConversation.emotionalStage) || localConversation.stage || 'denial',
           isAIEnabled: localConversation.isAIEnabled || false,

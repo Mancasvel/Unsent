@@ -11,7 +11,7 @@ interface Message {
   id: string
   content: string
   timestamp: Date
-  emotionalAnalysis: {
+  emotionalAnalysis?: {
     score: number
     stage: EmotionStage
     intensity: number
@@ -318,9 +318,9 @@ export default function ChatInterface({
                   animate={{ opacity: 1, height: 'auto' }}
                   className="text-xs text-gray-400 px-4"
                 >
-                  Score: {message.emotionalAnalysis.score} • 
-                  Stage: {message.emotionalAnalysis.stage} • 
-                  Keywords: {message.emotionalAnalysis.keywords.join(', ')}
+                  Score: {message.emotionalAnalysis?.score || 0} • 
+                  Stage: {message.emotionalAnalysis?.stage || 'unknown'} • 
+                  Keywords: {message.emotionalAnalysis?.keywords?.join(', ') || 'none'}
                 </motion.div>
               )}
             </motion.div>

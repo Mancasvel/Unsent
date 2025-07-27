@@ -45,8 +45,13 @@ export async function GET(
               content: msg.content,
               isUser: msg.messageType === 'user',
               timestamp: msg.createdAt,
-              emotionalScore: msg.emotionalAnalysis?.score,
-              stage: msg.emotionalAnalysis?.stage,
+              emotionalAnalysis: msg.emotionalAnalysis || {
+                score: 0,
+                stage: 'denial',
+                intensity: 0,
+                keywords: []
+              },
+              timeSpent: msg.timeSpent || 0,
               aiResponse: msg.aiResponse
             })),
             emotionalScore: conversation.emotionalScore,

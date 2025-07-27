@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getUserConversations, createConversation, cleanupDuplicateConversations } from '@/lib/database'
+import { withUnsentDB } from '@/lib/mongodb'
+import { ObjectId } from 'mongodb'
 
 // GET - Retrieve all conversations for user
 export async function GET(request: NextRequest) {
@@ -23,14 +25,34 @@ export async function GET(request: NextRequest) {
       includeBurned: false
     })
 
+    // Get person profiles for conversations that have them
+    const conversationsWithPersonInfo = await withUnsentDB(async (db) => {
+      return await Promise.all(conversations.map(async (conv: any) => {
+        let personProfile = null
+        if (conv.personId) {
+          try {
+            if (conv.personId.length === 24 && /^[0-9a-fA-F]{24}$/.test(conv.personId)) {
+              personProfile = await db.collection('person_profiles').findOne({
+                _id: new ObjectId(conv.personId),
+                userId: currentUser.userId
+              })
+            }
+          } catch (error) {
+            console.log('Error fetching person profile:', error)
+          }
+        }
+        return { ...conv, personProfile }
+      }))
+    })
+
     // Convert to the format expected by the frontend
-    const sanitizedConversations = conversations.map((conv: any) => ({
+    const sanitizedConversations = conversationsWithPersonInfo.map((conv: any) => ({
       id: conv._id?.toString() || conv.conversationId,
       title: conv.title || 'Untitled Conversation',
-      recipientProfile: conv.personId ? {
-        name: conv.title?.replace('Conversation with ', '') || 'Someone',
-        relationship: 'other',
-        context: conv.description || ''
+      recipientProfile: conv.personProfile ? {
+        name: conv.personProfile.name,
+        relationship: conv.personProfile.relationship || 'other',
+        context: conv.personProfile.context || conv.description || ''
       } : undefined,
       lastMessage: '', // Would need to fetch last message separately for performance
       lastMessageAt: conv.lastMessageAt || conv.updatedAt,
@@ -78,11 +100,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Use our database function to create conversation
+    // First create a person profile if recipient info is provided
+    let personId = ''
+    if (recipientProfile?.name) {
+      const personProfileData = {
+        userId: currentUser.userId,
+        name: recipientProfile.name,
+        relationship: recipientProfile.relationship || 'unknown',
+        description: recipientProfile.context || `Person for conversation: ${title}`,
+        context: recipientProfile.context || '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        conversationCount: 1,
+        lastConversationAt: new Date(),
+        tags: [],
+        isActive: true
+      }
+
+      const personResult = await withUnsentDB(async (db) => {
+        return await db.collection('person_profiles').insertOne(personProfileData)
+      })
+      
+      personId = personResult.insertedId.toString()
+    }
+
+    // Create conversation with proper parameters
     const conversation = await createConversation(
       currentUser.userId,
+      personId,
       title.substring(0, 200),
-      recipientProfile?.name || 'Someone'
+      `Conversation with ${recipientProfile?.name || 'Someone'}`
     )
 
     return NextResponse.json({ 

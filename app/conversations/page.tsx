@@ -43,6 +43,7 @@ export default function ConversationsPage() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [newConversationTitle, setNewConversationTitle] = useState('')
+  const [newConversationRecipient, setNewConversationRecipient] = useState('')
   const [showNewConversationModal, setShowNewConversationModal] = useState(false)
   const [filter, setFilter] = useState<'all' | 'active' | 'archived'>('all')
 
@@ -139,7 +140,7 @@ export default function ConversationsPage() {
   }
 
   const createConversation = async () => {
-    if (!newConversationTitle.trim()) return
+    if (!newConversationRecipient.trim()) return
     
     setCreating(true)
     try {
@@ -150,14 +151,19 @@ export default function ConversationsPage() {
           'x-user-id': (user as any)?.id || 'demo-user'
         },
         body: JSON.stringify({
-          title: newConversationTitle,
-          recipientProfile: null
+          title: newConversationTitle.trim() || `To ${newConversationRecipient}`,
+          recipientProfile: {
+            name: newConversationRecipient,
+            relationship: 'unknown',
+            context: `Conversation with ${newConversationRecipient}`
+          }
         })
       })
 
       if (response.ok) {
         const data = await response.json()
         setNewConversationTitle('')
+        setNewConversationRecipient('')
         setShowNewConversationModal(false)
         // Navigate to the new conversation
         router.push(`/conversation/${data.id}`)
@@ -505,21 +511,37 @@ export default function ConversationsPage() {
                 Quick Start Conversation
               </h3>
               <p className="text-gray-400 text-sm mb-4">
-                Give your conversation a title to begin writing
+                Who would you like to write to? Start your conversation now.
               </p>
+              <div className="mb-4">
+                <label className="block text-purple-300 text-sm font-medium mb-2">
+                  Who is this conversation for?
+                </label>
+                <input
+                  type="text"
+                  value={newConversationRecipient}
+                  onChange={(e) => setNewConversationRecipient(e.target.value)}
+                  className="w-full bg-black/50 border border-purple-500/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                  placeholder="e.g., My father, Sarah, My past self..."
+                  maxLength={50}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {newConversationRecipient.length}/50 characters
+                </p>
+              </div>
               <div className="mb-6">
                 <label className="block text-purple-300 text-sm font-medium mb-2">
-                  Conversation Title
+                  Conversation Title (Optional)
                 </label>
                 <input
                   type="text"
                   value={newConversationTitle}
                   onChange={(e) => setNewConversationTitle(e.target.value)}
                   className="w-full bg-black/50 border border-purple-500/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500 transition-colors"
-                  placeholder="e.g., Letter to my past self, To my father..."
+                  placeholder="e.g., Letter about forgiveness, Things I never said..."
                   maxLength={100}
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter' && newConversationTitle.trim()) {
+                    if (e.key === 'Enter' && newConversationRecipient.trim()) {
                       createConversation()
                     }
                   }}
@@ -531,7 +553,7 @@ export default function ConversationsPage() {
               <div className="flex gap-3">
                 <button
                   onClick={createConversation}
-                  disabled={creating || !newConversationTitle.trim()}
+                  disabled={creating || !newConversationRecipient.trim()}
                   className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
                 >
                   {creating ? 'Creating...' : 'Create & Start Writing'}
