@@ -26,6 +26,14 @@ export async function GET(request: NextRequest) {
 
     // Obtener detalles del plan de suscripción
     const planDetails = SUBSCRIPTION_PLANS[user.subscriptionPlan]
+    
+    // Si no existe el plan, usar valores por defecto
+    if (!planDetails) {
+      console.warn(`Plan ${user.subscriptionPlan} not found in SUBSCRIPTION_PLANS, defaulting to whisper`)
+      user.subscriptionPlan = 'whisper'
+    }
+    
+    const finalPlanDetails = planDetails || SUBSCRIPTION_PLANS.whisper
 
     // Verificar si la suscripción está activa
     const isSubscriptionActive = user.isSubscriptionActive && user.subscriptionEndDate > new Date()
@@ -36,11 +44,12 @@ export async function GET(request: NextRequest) {
         name: user.name,
         email: user.email,
         subscriptionPlan: user.subscriptionPlan,
-        subscriptionPlanName: planDetails.spiritualName,
-        subscriptionPlanDescription: planDetails.description,
+        subscriptionPlanName: finalPlanDetails.spiritualName,
+        subscriptionPlanDescription: finalPlanDetails.description,
         subscriptionStartDate: user.subscriptionStartDate,
         subscriptionEndDate: user.subscriptionEndDate,
         isSubscriptionActive,
+        isAdmin: user.isAdmin || false,
         aiChatsUsed: user.aiChatsUsed,
         aiChatsLimit: user.aiChatsLimit,
         aiChatsRemaining: Math.max(0, user.aiChatsLimit - user.aiChatsUsed),
@@ -50,9 +59,9 @@ export async function GET(request: NextRequest) {
         isActive: user.isActive,
         createdAt: user.createdAt,
         lastLogin: user.lastLogin,
-        planFeatures: planDetails.features,
-        planPrice: planDetails.price,
-        planDuration: planDetails.duration
+        planFeatures: finalPlanDetails.features,
+        planPrice: finalPlanDetails.price,
+        planDuration: finalPlanDetails.duration
       }
     }, { status: 200 })
 

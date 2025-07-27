@@ -1,0 +1,250 @@
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { useAuth } from '@/lib/AuthContext'
+import ChatInterface from '@/components/ChatInterface'
+import { getStageColor } from '@/lib/emotionStages'
+
+interface Message {
+  id: string
+  content: string
+  isUser: boolean
+  timestamp: Date
+  emotionalScore?: number
+  stage?: string
+}
+
+interface Conversation {
+  id: string
+  title?: string
+  recipientName?: string
+  messages: Message[]
+  emotionalScore: number
+  stage: string
+  isAIEnabled: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export default function ConversationPage() {
+  const params = useParams()
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
+  const [conversation, setConversation] = useState<Conversation | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const conversationId = params.id as string
+
+  useEffect(() => {
+    if (authLoading) return
+    
+    if (!user) {
+      router.push('/auth/login')
+      return
+    }
+
+    loadConversation()
+  }, [conversationId, user, authLoading])
+
+  const loadConversation = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // First try to get from our API
+      const response = await fetch(`/api/conversations/${conversationId}`, {
+        headers: {
+          'x-user-id': user!.id
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setConversation(data.conversation)
+      } else if (response.status === 404) {
+        // If not found, try to load from local storage or create new
+        const sessionData = localStorage.getItem(`unsent_conversation_${conversationId}`)
+        
+        if (sessionData) {
+          try {
+            const parsedData = JSON.parse(sessionData)
+            setConversation({
+              id: conversationId,
+              title: parsedData.title || 'Untitled Conversation',
+              recipientName: parsedData.recipientName || 'Someone',
+              messages: parsedData.messages || [],
+              emotionalScore: parsedData.emotionalScore || 0,
+              stage: parsedData.stage || 'denial',
+              isAIEnabled: parsedData.isAIEnabled || false,
+              createdAt: new Date(parsedData.createdAt || Date.now()),
+              updatedAt: new Date(parsedData.updatedAt || Date.now())
+            })
+          } catch (parseError) {
+            console.error('Error parsing conversation data:', parseError)
+            setError('Invalid conversation data')
+          }
+        } else {
+          // Create new conversation with this ID
+          setConversation({
+            id: conversationId,
+            title: 'New Conversation',
+            recipientName: 'Someone',
+            messages: [],
+            emotionalScore: 0,
+            stage: 'denial',
+            isAIEnabled: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+        }
+      } else {
+        throw new Error('Failed to load conversation')
+      }
+    } catch (error: any) {
+      console.error('Error loading conversation:', error)
+      setError(error.message || 'Failed to load conversation')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleNewMessage = (content: string) => {
+    if (!conversation) return
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      content,
+      isUser: true,
+      timestamp: new Date()
+    }
+
+    const updatedConversation = {
+      ...conversation,
+      messages: [...conversation.messages, newMessage],
+      updatedAt: new Date()
+    }
+
+    setConversation(updatedConversation)
+
+    // Save to localStorage
+    localStorage.setItem(
+      `unsent_conversation_${conversationId}`,
+      JSON.stringify(updatedConversation)
+    )
+  }
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading conversation...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-400 text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-white mb-2">Error Loading Conversation</h1>
+          <p className="text-gray-400 mb-6">{error}</p>
+          <div className="space-x-4">
+            <button
+              onClick={() => router.push('/chats')}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Back to Chats
+            </button>
+            <button
+              onClick={() => loadConversation()}
+              className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!conversation) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-400 text-6xl mb-4">💬</div>
+          <h1 className="text-2xl font-bold text-white mb-2">Conversation Not Found</h1>
+          <p className="text-gray-400 mb-6">This conversation doesn't exist or has been deleted.</p>
+          <button
+            onClick={() => router.push('/chats')}
+            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Back to Chats
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const stageColor = getStageColor(conversation.stage)
+
+  return (
+    <div className="min-h-screen bg-black">
+      {/* Header */}
+      <div className="border-b border-gray-800 bg-gray-900">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/chats')}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ← Back
+              </button>
+              <div>
+                <h1 className="text-xl font-bold text-white">
+                  {conversation.title || `To: ${conversation.recipientName}`}
+                </h1>
+                <p className="text-sm text-gray-400">
+                  {conversation.messages.length} messages • Stage: 
+                  <span className="ml-1" style={{ color: stageColor }}>
+                    {conversation.stage}
+                  </span>
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {conversation.isAIEnabled && (
+                <span className="px-3 py-1 bg-purple-600 text-white text-sm rounded-full">
+                  AI Active
+                </span>
+              )}
+              
+              <div className="px-3 py-1 bg-gray-700 text-gray-300 text-sm rounded-full">
+                Score: {conversation.emotionalScore}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat Interface */}
+      <div className="max-w-4xl mx-auto">
+        <ChatInterface
+          conversationId={conversationId}
+          messages={conversation.messages}
+          onNewMessage={handleNewMessage}
+          recipientName={conversation.recipientName || 'Someone'}
+          currentStage={conversation.stage}
+          isAIEnabled={conversation.isAIEnabled}
+        />
+      </div>
+    </div>
+  )
+} 

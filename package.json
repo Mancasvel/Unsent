@@ -10,7 +10,8 @@
     "seed": "tsx lib/seed.ts",
     "db:init": "tsx -r dotenv/config scripts/initDatabase.js",
     "db:reset": "tsx -r dotenv/config scripts/initDatabase.js --reset",
-    "db:check": "tsx -r dotenv/config scripts/initDatabase.js --check"
+    "db:check": "tsx -r dotenv/config scripts/initDatabase.js --check",
+    "db:migrate-users": "node scripts/migrateUsers.js"
   },
   "dependencies": {
     "@heroui/react": "^2.7.10",

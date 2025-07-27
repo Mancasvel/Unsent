@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb'
 export type EmotionStage = 'denial' | 'anger' | 'bargaining' | 'depression' | 'acceptance'
 
 // Planes de suscripción con nombres espirituales
-export type SubscriptionPlan = 'whisper' | 'reflection' | 'depths' | 'transcendence'
+export type SubscriptionPlan = 'whisper' | 'reflection' | 'depths' | 'transcendence' | 'admin'
 
 export interface SubscriptionPlanDetails {
   name: SubscriptionPlan
@@ -89,6 +89,26 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, SubscriptionPlanDetail
     isActive: true,
     revenueCatProductId: 'transcendence_monthly',
     revenueCatEntitlementId: 'transcendence_access'
+  },
+  admin: {
+    name: 'admin',
+    spiritualName: 'Eternal Overseer',
+    description: 'Administrative access to all realms',
+    price: 0,
+    duration: 365,
+    aiChatsLimit: 999999,
+    features: [
+      'Unlimited AI conversations',
+      'Administrative dashboard',
+      'User management',
+      'Analytics access',
+      'All premium features',
+      'Priority support',
+      'Beta feature access'
+    ],
+    isActive: true,
+    revenueCatProductId: 'admin_unlimited',
+    revenueCatEntitlementId: 'admin_access'
   }
 }
 
@@ -101,6 +121,7 @@ export interface User {
   updatedAt: Date
   lastLogin?: Date
   isActive: boolean
+  isAdmin?: boolean
   
   // Sistema de suscripción
   subscriptionPlan: SubscriptionPlan
