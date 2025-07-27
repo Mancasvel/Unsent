@@ -10,7 +10,8 @@ import {
   RevenueCatWebhookEvent,
   VectorSearchResult,
   VectorSearchOptions,
-  EmotionStage
+  EmotionStage,
+  PersonProfile
 } from './types'
 import { withUnsentDB } from './mongodb'
 import { encryptMessage, decryptMessage, generateUserKey } from './encryption'
@@ -245,7 +246,12 @@ export async function createConversation(
       messageCount: 0,
       emotionalScore: 0,
       currentStage: 'denial',
-      stageHistory: [],
+      stageHistory: [{
+        stage: 'denial',
+        reachedAt: now,
+        score: 0,
+        duration: 0
+      }],
       
       // Sistema de IA
       aiEnabled: false,
@@ -351,6 +357,171 @@ export async function enableAIForConversation(
       return { success: true, message: 'AI enabled for this conversation' }
     } else {
       return { success: false, message: 'Failed to enable AI' }
+    }
+  })
+}
+
+/**
+ * Obtiene una conversación por ID y usuario
+ */
+export async function getConversationById(conversationId: string, userId: string): Promise<Conversation | null> {
+  return withUnsentDB(async (db) => {
+    // Try to find by MongoDB ObjectId first
+    let conversation = null
+    
+    try {
+      // If conversationId looks like a MongoDB ObjectId
+      if (conversationId.length === 24 && /^[0-9a-fA-F]{24}$/.test(conversationId)) {
+        conversation = await db.collection('conversations').findOne({ 
+          _id: new ObjectId(conversationId),
+          userId 
+        })
+      }
+    } catch (error) {
+      // If ObjectId is invalid, continue with string search
+    }
+    
+    // If not found, try to find by title or custom identifier
+    if (!conversation) {
+      conversation = await db.collection('conversations').findOne({ 
+        title: conversationId,
+        userId 
+      })
+    }
+    
+    return conversation
+  })
+}
+
+/**
+ * Obtiene una conversación por ID o la crea si no existe
+ */
+export async function getOrCreateConversation(
+  conversationId: string, 
+  userId: string,
+  recipientName?: string
+): Promise<Conversation> {
+  return withUnsentDB(async (db) => {
+    // First try to get existing conversation
+    let conversation = await getConversationById(conversationId, userId)
+    
+    if (conversation) {
+      return conversation
+    }
+    
+    // If conversation doesn't exist, create it
+    const now = new Date()
+    
+    // Create a person profile for this conversation
+    const personProfile: Omit<PersonProfile, '_id'> = {
+      userId,
+      name: recipientName || 'Someone',
+      relationship: 'other',
+      description: 'Auto-created person profile',
+      context: `Person for conversation ${conversationId}`,
+      createdAt: now,
+      updatedAt: now,
+      conversationCount: 1,
+      lastConversationAt: now,
+      tags: [],
+      isActive: true
+    }
+    
+    const personResult = await db.collection('person_profiles').insertOne(personProfile)
+    const personId = personResult.insertedId.toString()
+    
+    // Generate a unique title if conversationId is not descriptive
+    let title = `Conversation with ${recipientName || 'Someone'}`
+    if (conversationId.length === 24 && /^[0-9a-fA-F]{24}$/.test(conversationId)) {
+      title = `Conversation ${new Date().toLocaleDateString()}`
+    } else {
+      title = `Conversation ${conversationId}`
+    }
+    
+    const newConversation: Omit<Conversation, '_id'> = {
+      userId,
+      personId,
+      title,
+      description: `Auto-created conversation for ${recipientName || 'Someone'}`,
+      createdAt: now,
+      updatedAt: now,
+      lastMessageAt: now,
+      isActive: true,
+      isArchived: false,
+      isBurned: false,
+      burnedAt: undefined,
+      messageCount: 0,
+      emotionalScore: 0,
+      currentStage: 'denial',
+      stageHistory: [{
+        stage: 'denial',
+        reachedAt: now,
+        score: 0,
+        duration: 0
+      }],
+      aiEnabled: false,
+      aiResponsesUsed: 0,
+      aiLastResponse: undefined,
+      aiNextResponse: undefined,
+      isVectorized: false,
+      vectorIds: [],
+      archivedAt: undefined,
+      metadata: {
+        totalWords: 0,
+        avgWordsPerMessage: 0,
+        totalTimeSpent: 0,
+        mostUsedKeywords: [],
+        intensityPeaks: [],
+        mysteriousFragmentsShown: []
+      }
+    }
+
+    const result = await db.collection('conversations').insertOne(newConversation)
+    
+    // Incrementar contador de conversaciones del usuario
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(userId) },
+      { 
+        $inc: { totalConversations: 1 },
+        $set: { updatedAt: new Date() }
+      }
+    )
+
+    return { ...newConversation, _id: result.insertedId }
+  })
+}
+
+/**
+ * Obtiene una conversación completa con sus mensajes
+ */
+export async function getConversationWithMessages(conversationId: string, userId: string): Promise<{
+  conversation: Conversation,
+  messages: Message[],
+  personProfile?: PersonProfile
+} | null> {
+  return withUnsentDB(async (db) => {
+    const conversation = await getConversationById(conversationId, userId)
+    
+    if (!conversation) {
+      return null
+    }
+    
+    // Get messages
+    const messages = await getConversationMessages(conversationId, userId)
+    
+    // Get person profile
+    let personProfile = undefined
+    if (conversation.personId) {
+      personProfile = await db.collection('person_profiles').findOne({
+        _id: new ObjectId(conversation.personId),
+        userId
+      })
+    }
+    
+    return {
+      conversation,
+      messages,
+      personProfile
     }
   })
 }

@@ -115,6 +115,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, SubscriptionPlanDetail
 // Tipos para el Usuario actualizado
 export interface User {
   _id?: ObjectId
+  id?: string // For API responses
   email: string
   name?: string
   createdAt: Date

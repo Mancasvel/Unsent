@@ -54,58 +54,118 @@ export default function ConversationPage() {
       setLoading(true)
       setError(null)
 
-      // First try to get from our API
+      // First try to get from localStorage to get recipient name
+      const localStorageKey = `unsent_conversation_${conversationId}`
+      const localData = localStorage.getItem(localStorageKey)
+      let localConversation = null
+      
+      if (localData) {
+        try {
+          localConversation = JSON.parse(localData)
+        } catch (parseError) {
+          console.error('Error parsing local conversation:', parseError)
+        }
+      }
+
+      // Try to get from our API (which will auto-create if needed)
       const response = await fetch(`/api/conversations/${conversationId}`, {
         headers: {
-          'x-user-id': user!.id
+          'x-user-id': user?.id || 'demo-user'
         }
       })
 
       if (response.ok) {
         const data = await response.json()
-        setConversation(data.conversation)
-      } else if (response.status === 404) {
-        // If not found, try to load from local storage or create new
-        const sessionData = localStorage.getItem(`unsent_conversation_${conversationId}`)
-        
-        if (sessionData) {
-          try {
-            const parsedData = JSON.parse(sessionData)
-            setConversation({
-              id: conversationId,
-              title: parsedData.title || 'Untitled Conversation',
-              recipientName: parsedData.recipientName || 'Someone',
-              messages: parsedData.messages || [],
-              emotionalScore: parsedData.emotionalScore || 0,
-              stage: parsedData.stage || 'denial',
-              isAIEnabled: parsedData.isAIEnabled || false,
-              createdAt: new Date(parsedData.createdAt || Date.now()),
-              updatedAt: new Date(parsedData.updatedAt || Date.now())
-            })
-          } catch (parseError) {
-            console.error('Error parsing conversation data:', parseError)
-            setError('Invalid conversation data')
+        if (data.success && data.conversation) {
+          const apiConversation = data.conversation
+          
+          // Merge local data with API data, preferring local recipient name if available
+          const mergedConversation: Conversation = {
+            id: apiConversation.id,
+            title: localConversation?.title || apiConversation.title || `To: ${localConversation?.recipient || apiConversation.recipientName || 'Someone'}`,
+            recipientName: localConversation?.recipient || apiConversation.recipientName || 'Someone',
+            messages: apiConversation.messages || [],
+            emotionalScore: apiConversation.emotionalScore || 0,
+            stage: apiConversation.stage || 'denial',
+            isAIEnabled: apiConversation.isAIEnabled || false,
+            createdAt: new Date(apiConversation.createdAt),
+            updatedAt: new Date(apiConversation.updatedAt)
           }
-        } else {
-          // Create new conversation with this ID
-          setConversation({
-            id: conversationId,
-            title: 'New Conversation',
-            recipientName: 'Someone',
-            messages: [],
-            emotionalScore: 0,
-            stage: 'denial',
-            isAIEnabled: false,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          })
+          
+          setConversation(mergedConversation)
+          
+          // Update localStorage with the merged data
+          localStorage.setItem(localStorageKey, JSON.stringify({
+            ...localConversation,
+            ...mergedConversation,
+            recipient: mergedConversation.recipientName
+          }))
+          
+          return
         }
-      } else {
-        throw new Error('Failed to load conversation')
       }
+
+      // If API fails but we have local data, use it
+      if (localConversation) {
+        console.log('Using local conversation data for ID:', conversationId)
+        
+        const conversation: Conversation = {
+          id: conversationId,
+          title: localConversation.title || `To: ${localConversation.recipient || 'Someone'}`,
+          recipientName: localConversation.recipient || 'Someone',
+          messages: localConversation.messages || [],
+          emotionalScore: localConversation.emotionalScore || 0,
+          stage: (localConversation.emotionalStage === 'fog' ? 'denial' : localConversation.emotionalStage) || localConversation.stage || 'denial',
+          isAIEnabled: localConversation.isAIEnabled || false,
+          createdAt: new Date(localConversation.createdAt || Date.now()),
+          updatedAt: new Date(localConversation.updatedAt || Date.now())
+        }
+        
+        setConversation(conversation)
+        return
+      }
+
+      // If no local data and API fails, create a basic conversation
+      console.log('Creating new conversation for ID:', conversationId)
+      
+      const fallbackConversation: Conversation = {
+        id: conversationId,
+        title: 'New Conversation',
+        recipientName: 'Someone',
+        messages: [],
+        emotionalScore: 0,
+        stage: 'denial',
+        isAIEnabled: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      setConversation(fallbackConversation)
+      
+      // Save to localStorage
+      localStorage.setItem(localStorageKey, JSON.stringify({
+        ...fallbackConversation,
+        recipient: fallbackConversation.recipientName
+      }))
+
     } catch (error: any) {
       console.error('Error loading conversation:', error)
-      setError(error.message || 'Failed to load conversation')
+      
+      // Even if there's an error, create a basic conversation
+      const fallbackConversation: Conversation = {
+        id: conversationId,
+        title: 'New Conversation',
+        recipientName: 'Someone',
+        messages: [],
+        emotionalScore: 0,
+        stage: 'denial',
+        isAIEnabled: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      setConversation(fallbackConversation)
+      setError(null) // Clear error since we provided a fallback
     } finally {
       setLoading(false)
     }

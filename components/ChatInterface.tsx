@@ -22,14 +22,24 @@ interface Message {
 
 interface ChatInterfaceProps {
   conversationId: string
-  conversationTitle: string
-  isPremium: boolean
+  conversationTitle?: string
+  isPremium?: boolean
+  messages?: Message[]
+  onNewMessage?: (content: string) => void
+  recipientName?: string
+  currentStage?: string
+  isAIEnabled?: boolean
 }
 
 export default function ChatInterface({ 
   conversationId, 
-  conversationTitle, 
-  isPremium 
+  conversationTitle,
+  isPremium = false,
+  messages: externalMessages,
+  onNewMessage,
+  recipientName,
+  currentStage: externalStage,
+  isAIEnabled = false
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [currentMessage, setCurrentMessage] = useState('')
@@ -41,6 +51,23 @@ export default function ChatInterface({
   const { user } = useAuth()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Use external messages if provided, otherwise use internal state
+  const displayMessages = externalMessages || messages
+  const displayStage = (externalStage as EmotionStage) || currentStage
+
+  // Initialize with external data
+  useEffect(() => {
+    if (externalMessages && externalMessages.length > 0) {
+      setMessages(externalMessages)
+    }
+  }, [externalMessages])
+
+  useEffect(() => {
+    if (externalStage) {
+      setCurrentStage(externalStage as EmotionStage)
+    }
+  }, [externalStage])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -83,8 +110,21 @@ export default function ChatInterface({
   }
 
   const handleSendMessage = async () => {
+    console.log('🚀 Send button clicked!')
+    console.log('User:', user)
+    console.log('Current message:', currentMessage)
+    console.log('Conversation ID:', conversationId)
+    
     const userKey = getUserKey()
-    if (!currentMessage.trim() || !user || !userKey) return
+    if (!currentMessage.trim() || !user || !userKey) {
+      console.log('❌ Send cancelled - missing requirements:')
+      console.log('- Message:', currentMessage.trim())
+      console.log('- User:', !!user)
+      console.log('- User key:', !!userKey)
+      return
+    }
+
+    console.log('✅ Proceeding with message send...')
 
     const timeSpent = typingStartTime ? (Date.now() - typingStartTime) / 1000 : 0
     const analysis = analyzeMessage(currentMessage, timeSpent)
@@ -98,22 +138,64 @@ export default function ChatInterface({
     }
 
     try {
-      // Encrypt message before storing
-      const encryptedContent = encryptMessage(currentMessage, userKey)
-      
-      // TODO: Save to database with encrypted content
-      console.log('Message would be saved encrypted:', encryptedContent)
-      
-      // Add to local state for now
-      setMessages(prev => [...prev, newMessage])
-      
-      // Update overall score
-      const newScore = messages.length > 0 
-        ? Math.round((overallScore + analysis.score) / 2)
-        : analysis.score
-      
-      setOverallScore(newScore)
-      setCurrentStage(analysis.stage)
+      console.log('📡 Sending API request...')
+      // Save message to database via API
+      const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || 'demo-user'
+        },
+        body: JSON.stringify({
+          content: currentMessage.trim(),
+          timeSpent
+        })
+      })
+
+      console.log('📡 API Response status:', response.status)
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('✅ Message saved successfully:', result)
+        
+        // Add to local state
+        setMessages(prev => [...prev, newMessage])
+        
+        // Call external callback if provided
+        if (onNewMessage) {
+          onNewMessage(currentMessage.trim())
+        }
+        
+        // Update overall score from API response if available
+        if (result.conversation) {
+          setOverallScore(result.conversation.emotionalScore)
+          setCurrentStage(result.conversation.stage)
+        } else {
+          // Fallback to local calculation
+          const newScore = displayMessages.length > 0 
+            ? Math.round((overallScore + analysis.score) / 2)
+            : analysis.score
+          setOverallScore(newScore)
+          setCurrentStage(analysis.stage)
+        }
+      } else {
+        const error = await response.json()
+        console.error('❌ Failed to save message:', error)
+        
+        // Still add to local state as fallback
+        setMessages(prev => [...prev, newMessage])
+        
+        // Call external callback if provided
+        if (onNewMessage) {
+          onNewMessage(currentMessage.trim())
+        }
+        
+        const newScore = displayMessages.length > 0 
+          ? Math.round((overallScore + analysis.score) / 2)
+          : analysis.score
+        setOverallScore(newScore)
+        setCurrentStage(analysis.stage)
+      }
       
       // Clear input
       setCurrentMessage('')
@@ -121,7 +203,26 @@ export default function ChatInterface({
       setTypingStartTime(null)
       
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('💥 Error sending message:', error)
+      
+      // Add to local state as fallback
+      setMessages(prev => [...prev, newMessage])
+      
+      // Call external callback if provided
+      if (onNewMessage) {
+        onNewMessage(currentMessage.trim())
+      }
+      
+      const newScore = displayMessages.length > 0 
+        ? Math.round((overallScore + analysis.score) / 2)
+        : analysis.score
+      setOverallScore(newScore)
+      setCurrentStage(analysis.stage)
+      
+      // Clear input
+      setCurrentMessage('')
+      setIsTyping(false)
+      setTypingStartTime(null)
     }
   }
 
@@ -191,49 +292,40 @@ export default function ChatInterface({
         )}
       </AnimatePresence>
 
-      {/* Messages Area */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <AnimatePresence>
-          {messages.map((message) => (
+          {displayMessages.map((message, index) => (
             <motion.div
               key={message.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="flex justify-end"
+              className="space-y-2"
             >
-              <div className="max-w-xs lg:max-w-md px-4 py-2 bg-gradient-to-r from-purple-600/80 to-pink-600/80 rounded-lg text-white">
-                <p className="text-sm leading-relaxed">{message.content}</p>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/20">
-                  <span className="text-xs text-white/70">
+              <div className="flex justify-end">
+                <div className="max-w-[80%] bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-2xl rounded-br-sm">
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <div className="mt-2 text-xs opacity-70">
                     {message.timestamp.toLocaleTimeString()}
-                  </span>
-                  <span 
-                    className="text-xs px-2 py-1 rounded-full bg-white/20"
-                    style={{ 
-                      color: getStageColors(message.emotionalAnalysis.stage)
-                    }}
-                  >
-                    {message.emotionalAnalysis.stage}
-                  </span>
+                  </div>
                 </div>
               </div>
+              
+              {/* Emotional Analysis */}
+              {showAnalysis && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="text-xs text-gray-400 px-4"
+                >
+                  Score: {message.emotionalAnalysis.score} • 
+                  Stage: {message.emotionalAnalysis.stage} • 
+                  Keywords: {message.emotionalAnalysis.keywords.join(', ')}
+                </motion.div>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
-        
-        {messages.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-lg mb-4">
-              What do you need to say?
-            </div>
-            <p className="text-gray-500 text-sm max-w-md mx-auto">
-              This is your safe space. Write what you feel, what you think, 
-              what you never could say. No one else will read it.
-            </p>
-          </div>
-        )}
-        
         <div ref={messagesEndRef} />
       </div>
 
@@ -262,6 +354,14 @@ export default function ChatInterface({
             className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-medium rounded-lg transition-all duration-300 disabled:opacity-50"
           >
             Send
+          </button>
+          
+          {/* Debug Test Button - Remove this after testing */}
+          <button
+            onClick={() => alert('Test button works!')}
+            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded"
+          >
+            Test
           </button>
         </div>
         
